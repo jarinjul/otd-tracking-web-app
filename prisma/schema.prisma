@@ -1,0 +1,305 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum RagStatus {
+  green
+  amber
+  red
+}
+
+enum Phase {
+  ideation
+  alignment
+  prd_signoff
+  development
+  testing
+  uat
+  production
+  completed
+}
+
+enum ProjectRole {
+  ProjectManager
+  TechLead
+  Developer
+  QAEngineer
+  UIUXDesigner
+  BusinessAnalyst
+  Stakeholder
+  ProductOwner
+  DevOps
+  Consultant
+}
+
+enum Severity {
+  high
+  medium
+  low
+}
+
+enum IdeaStatus {
+  draft
+  reviewing
+  approved
+  rejected
+}
+
+enum ReleaseStatus {
+  planned
+  in_progress
+  deployed
+  rolled_back
+}
+
+// ─── Core Entities ────────────────────────────────────────────────────────────
+
+model Person {
+  id                   String            @id @default(cuid())
+  name                 String
+  email                String?           @unique
+  department           String?
+  avatarUrl            String?
+  roles                ProjectRole[]     @default([])
+  monthlyCapacityHours Int               @default(160)
+  memberships          ProjectMember[]
+  workloadEntries      ReleaseWorkload[]
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+}
+
+model Project {
+  id              String         @id @default(cuid())
+  name            String
+  description     String         @default("")
+  category        String         @default("")
+  ragStatus       RagStatus      @default(green)
+  phase           Phase          @default(ideation)
+  progressPercent Int            @default(0)
+
+  startDate         DateTime
+  deadline          DateTime
+  nextMilestone     String   @default("")
+  nextMilestoneDate DateTime?
+  isDelayed         Boolean  @default(false)
+  delayDays         Int?
+
+  budgetTotal Float?
+  budgetUsed  Float?
+  currency    String? @default("THB")
+
+  needsDecision Boolean @default(false)
+  decisionNote  String?
+
+  client       String?
+  tags         String[] @default([])
+  stakeholders String[] @default([])
+
+  strategicBucket    String?
+
+  prdUrl             String?
+  designPrototypeUrl String?
+  prdContent         String? @default("")
+
+  lastUpdated DateTime @updatedAt
+
+  teamMembers ProjectMember[]
+  releases    Release[]
+
+  createdAt DateTime @default(now())
+}
+
+model ProjectMember {
+  id                String      @id @default(cuid())
+  project           Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId         String
+  person            Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId          String
+  role              ProjectRole
+  responsibilities  String[]    @default([])
+  startDate         DateTime
+  endDate           DateTime?
+  allocationPercent Int?
+}
+
+model IdeaItem {
+  id          String     @id @default(cuid())
+  release     Release    @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  releaseId   String
+  title       String
+  description String     @default("")
+  votes       Int        @default(0)
+  status      IdeaStatus @default(draft)
+  createdAt   DateTime   @default(now())
+}
+
+model Blocker {
+  id          String    @id @default(cuid())
+  release     Release   @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  releaseId   String
+  description String
+  severity    Severity
+  owner       String
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Risk {
+  id          String   @id @default(cuid())
+  release     Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  releaseId   String
+  description String
+  likelihood  Severity
+  impact      Severity
+  mitigation  String?
+  createdAt   DateTime @default(now())
+}
+
+model Release {
+  id           String        @id @default(cuid())
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+  version      String
+  startDate    DateTime?
+  endDate      DateTime?
+  releaseDate  DateTime?
+  status       ReleaseStatus @default(planned)
+  features     String[]      @default([])
+  deployNote   String?
+  releaseNotes String?
+
+  // ── Status tracking (moved from Project — tracked per release now) ──
+  ragStatus       RagStatus @default(green)
+  phase           Phase     @default(ideation)
+  progressPercent Int       @default(0)
+  isDelayed       Boolean   @default(false)
+  delayDays       Int?
+  needsDecision   Boolean   @default(false)
+  decisionNote    String?
+
+  // ── Development cost tracking (Internal Dev + AI vs Vendor) ──
+  // devEntries: [{ developBy, devLevel, developTimeMonths, manhours }]
+  devEntries Json @default("[]")
+  // aiEntries: [{ model, cost }]
+  aiEntries Json @default("[]")
+
+  vendorName       String?
+  vendorCost       Float? // Baht — quote if outsourced
+  vendorTimeDays Float?
+
+  ideas           IdeaItem[]
+  blockers        Blocker[]
+  nextSteps       NextStep[]
+  risks           Risk[]
+  workloadEntries ReleaseWorkload[]
+
+  createdAt DateTime @default(now())
+}
+
+// Hours a Person is allocated to a Release in a given calendar month — input on the Workload matrix page.
+model ReleaseWorkload {
+  id        String   @id @default(cuid())
+  release   Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  releaseId String
+  person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId  String
+  month     DateTime // normalized to the 1st of the month
+  hours     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([releaseId, personId, month])
+  @@index([personId])
+}
+
+model NextStep {
+  id          String   @id @default(cuid())
+  release     Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  releaseId   String
+  description String
+  owner       String
+  dueDate     DateTime
+  done        Boolean  @default(false)
+  priority    Severity @default(medium) // high=P0, medium=P1, low=P2
+  effortDays  Float? // estimated effort in person-days, used for weekly capacity planning
+  createdAt   DateTime @default(now())
+}
+
+// ─── Vendor Purchase Orders (imported from SAP PO history export) ─────────────
+
+model VendorOrder {
+  id          String   @id @default(cuid())
+  vendorCode  String
+  vendorName  String
+  poNumber    String
+  item        String
+  docType     String?
+  docDate     DateTime
+  description String
+  materialGroup String?
+
+  orderQty  Float
+  orderUnit String?
+  netPrice  Float
+  priceUnit Float  @default(1)
+  currency  String @default("THB")
+  totalValue Float // orderQty * netPrice / priceUnit, computed at import time
+
+  stillToDeliverQty   Float?
+  stillToDeliverValue Float?
+  stillToInvoiceQty   Float?
+  stillToInvoiceValue Float?
+
+  createdAt DateTime @default(now())
+
+  @@unique([poNumber, item])
+  @@index([vendorCode])
+}
+
+// ─── Weekly Plan — persisted, editable, per-week planning ─────────────────────
+
+enum PlanItemSource {
+  auto
+  manual
+}
+
+enum PlanItemStatus {
+  pending
+  done
+  carried_over // not finished this week — will roll into next week's plan
+}
+
+model WeekPlan {
+  id        String         @id @default(cuid())
+  weekStart DateTime       @unique // normalized to Monday 00:00 of that week
+  items     WeekPlanItem[]
+  createdAt DateTime       @default(now())
+}
+
+model WeekPlanItem {
+  id         String         @id @default(cuid())
+  weekPlan   WeekPlan       @relation(fields: [weekPlanId], references: [id], onDelete: Cascade)
+  weekPlanId String
+  source     PlanItemSource @default(manual)
+  itemType   String? // critical / delayed / decision / blocker / task / manual — for badge styling
+  title      String
+  subtitle   String?
+  note       String? // lead's own note, editable regardless of source
+  projectName String?
+  owner      String?
+  status     PlanItemStatus @default(pending)
+  sourceRefId String? // dedup key for auto-generated items, e.g. "rag-<releaseId>"
+  carriedFromId String? // id of the WeekPlanItem in the previous week this was carried from
+  sortOrder  Int            @default(0)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([weekPlanId])
+}

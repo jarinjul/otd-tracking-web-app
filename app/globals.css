@@ -1,26 +1,93 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* ─── Brand Colors ─────────────────────────────────────────────────────────── */
+  --color-primary:        #1E2A3A;
+  --color-surface:        #F8F9FB;
+  --color-card:           #FFFFFF;
+  --color-text-primary:   #1A1A2E;
+  --color-text-muted:     #6B7280;
+
+  /* ─── RAG Status ────────────────────────────────────────────────────────────── */
+  --color-rag-green:        #10B981;
+  --color-rag-green-light:  #D1FAE5;
+  --color-rag-green-text:   #065F46;
+  --color-rag-amber:        #F59E0B;
+  --color-rag-amber-light:  #FEF3C7;
+  --color-rag-amber-text:   #92400E;
+  --color-rag-red:          #EF4444;
+  --color-rag-red-light:    #FEE2E2;
+  --color-rag-red-text:     #991B1B;
+
+  /* ─── Accent ─────────────────────────────────────────────────────────────────  */
+  --color-accent:           #6366F1;
+  --color-accent-light:     #EEF2FF;
+  --color-accent-dark:      #3730A3;
+
+  /* ─── Overload Warning ───────────────────────────────────────────────────────  */
+  --color-overload:         #F97316;
+  --color-overload-light:   #FFEDD5;
+
+  /* ─── Neutrals ───────────────────────────────────────────────────────────────  */
+  --color-border:           #E5E7EB;
+  --color-border-muted:     #F3F4F6;
+  --color-gray-50:          #F9FAFB;
+  --color-gray-100:         #F3F4F6;
+  --color-gray-200:         #E5E7EB;
+  --color-gray-300:         #D1D5DB;
+  --color-gray-400:         #9CA3AF;
+  --color-gray-500:         #6B7280;
+  --color-gray-600:         #4B5563;
+  --color-gray-700:         #374151;
+  --color-gray-800:         #1F2937;
+  --color-gray-900:         #111827;
+
+  /* ─── Typography ─────────────────────────────────────────────────────────────  */
+  --font-sans:              'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* ─── Spacing / Radius ───────────────────────────────────────────────────────  */
+  --radius-card:            12px;
+  --radius-badge:           9999px;
+
+  /* ─── Gantt ──────────────────────────────────────────────────────────────────  */
+  --gantt-row-height:       48px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Pulse animation for RAG-red critical badge ────────────────────────────  */
+@keyframes rag-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+.rag-pulse {
+  animation: rag-pulse 2s ease-in-out infinite;
+}
+
+/* ─── Decision badge blink ──────────────────────────────────────────────────  */
+@keyframes decision-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+.decision-blink {
+  animation: decision-blink 1.5s ease-in-out infinite;
+}
+
+/* ─── Print styles ──────────────────────────────────────────────────────────  */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; color: #000; font-size: 12px; }
 }
