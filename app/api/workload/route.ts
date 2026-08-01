@@ -1,10 +1,12 @@
 import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-// "2026-03" -> local Date at the 1st of that month (avoids UTC-shift bugs from new Date(string)).
+// "2026-03" -> UTC midnight on the 1st of that month. Must be UTC (not the server's local
+// timezone) — this runs on both a GMT+7 dev machine and Vercel's UTC servers, and both must
+// produce the exact same instant so the same logical month always maps to the same DB row.
 function parseMonthParam(month: string): Date {
   const [y, m] = month.split("-").map(Number)
-  return new Date(y, (m ?? 1) - 1, 1)
+  return new Date(Date.UTC(y, (m ?? 1) - 1, 1))
 }
 
 export async function GET() {
