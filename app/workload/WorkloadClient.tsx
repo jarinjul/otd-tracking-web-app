@@ -141,13 +141,20 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
     })
   }
 
-  // Total hours a release x person cell holds, summed across that release's months.
+  // Total hours a release x person cell holds, summed across that release's months (lifetime —
+  // used inside the edit popover, which shows every month of the release at once).
   function releasePersonTotal(release: ReleaseOpt, personId: string) {
     return releaseMonths(release).reduce((sum, m) => sum + (hours[cellKey(release.id, personId, m)] ?? 0), 0)
   }
 
-  function projectSubtotal(project: ProjectOpt, personId: string) {
-    return project.releases.reduce((sum, r) => sum + releasePersonTotal(r, personId), 0)
+  // Hours for just the selected month — this is what the collapsed matrix (release row badge and
+  // project subtotal) shows, so it stays consistent with the month dropdown and the footer.
+  function releasePersonMonthTotal(release: ReleaseOpt, personId: string) {
+    return hours[cellKey(release.id, personId, effectiveMonth)] ?? 0
+  }
+
+  function projectSubtotalMonth(project: ProjectOpt, personId: string) {
+    return project.releases.reduce((sum, r) => sum + releasePersonMonthTotal(r, personId), 0)
   }
 
   // Grand total per person across every release and every month, regardless of collapsed groups.
@@ -460,7 +467,7 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
                         </span>
                       </td>
                       {people.map((p) => {
-                        const subtotal = projectSubtotal(project, p.id)
+                        const subtotal = projectSubtotalMonth(project, p.id)
                         return (
                           <td key={p.id} className="px-3 py-2.5 text-center text-xs tabular-nums font-medium" style={{ color: subtotal > 0 ? "var(--color-text-primary)" : "var(--color-text-muted)" }}>
                             {subtotal > 0 ? `${subtotal}h` : "—"}
@@ -485,7 +492,8 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
                           <span className="ml-2" style={{ color: "var(--color-text-muted)" }}>{STATUS_LABEL[r.status] ?? r.status}</span>
                         </td>
                         {people.map((p) => {
-                          const total = releasePersonTotal(r, p.id)
+                          const monthTotal = releasePersonMonthTotal(r, p.id)
+                          const lifetimeTotal = releasePersonTotal(r, p.id)
                           const isOpen = openCell?.releaseId === r.id && openCell?.personId === p.id
                           return (
                             <td key={p.id} className="px-2 py-1.5 text-center relative">
@@ -494,12 +502,12 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
                                 onClick={() => setOpenCell(isOpen ? null : { releaseId: r.id, personId: p.id })}
                                 className="w-16 px-1.5 py-1 text-center text-xs rounded border"
                                 style={
-                                  total > 0
+                                  monthTotal > 0
                                     ? { borderColor: "var(--color-accent)", background: "var(--color-accent-light)", color: "var(--color-accent)", fontWeight: 600 }
                                     : { ...inputStyle, color: "var(--color-text-muted)" }
                                 }
                               >
-                                {total > 0 ? `${total}h` : "—"}
+                                {monthTotal > 0 ? `${monthTotal}h` : "—"}
                               </button>
 
                               {isOpen && (
@@ -535,8 +543,8 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
                                     ))}
                                   </div>
                                   <div className="flex items-center justify-between mt-2.5 pt-2 border-t" style={{ borderColor: "var(--color-border)" }}>
-                                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>Total</span>
-                                    <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>{total}h</span>
+                                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>Total (all months)</span>
+                                    <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>{lifetimeTotal}h</span>
                                   </div>
                                 </div>
                               )}
