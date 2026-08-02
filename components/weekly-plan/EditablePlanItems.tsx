@@ -24,6 +24,7 @@ const TYPE_STYLE: Record<string, { bg: string; color: string; label: string }> =
   decision: { bg: "var(--color-rag-amber-light)", color: "var(--color-rag-amber-text)", label: "⚠ Decision" },
   blocker:  { bg: "var(--color-rag-red-light)",   color: "var(--color-rag-red-text)",   label: "🚧 Blocker" },
   task:     { bg: "var(--color-accent-light)",    color: "var(--color-accent)",         label: "✅ P0 Task" },
+  planned:  { bg: "var(--color-rag-green-light)", color: "var(--color-rag-green-text)", label: "🗓 Planned" },
   manual:   { bg: "var(--color-surface)",         color: "var(--color-text-muted)",     label: "📝 Manual" },
 }
 

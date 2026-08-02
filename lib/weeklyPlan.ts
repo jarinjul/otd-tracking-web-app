@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { addDays } from "@/lib/utils/date"
+import { PHASE_LABELS } from "@/lib/types"
 
 // Parse a "YYYY-MM-DD" param into UTC midnight Monday of that week. Must be timezone-independent
 // (not the server's local time) — this runs on both a GMT+7 dev machine and Vercel's UTC servers,
@@ -35,9 +36,11 @@ async function generateAutoItems(weekStartDate: Date): Promise<AutoItem[]> {
   ])
 
   const list: AutoItem[] = []
+  const flaggedReleaseIds = new Set<string>()
 
   for (const p of projects) {
     for (const r of p.releases) {
+      if (r.ragStatus === "red" || r.isDelayed || r.needsDecision) flaggedReleaseIds.add(r.id)
       if (r.ragStatus === "red") {
         list.push({
           sourceRefId: `rag-${r.id}`,
@@ -69,6 +72,31 @@ async function generateAutoItems(weekStartDate: Date): Promise<AutoItem[]> {
           projectName: p.name,
           owner: null,
           score: 80,
+        })
+      }
+
+      // Release is scheduled (per its Gantt/Release start–end dates) to be in progress sometime
+      // during the selected week — surface it even when nothing is flagged critical/delayed/decision,
+      // since that's still work the team planned for this week.
+      if (
+        !flaggedReleaseIds.has(r.id) &&
+        r.status !== "rolled_back" &&
+        r.startDate &&
+        r.endDate &&
+        r.startDate <= weekEndDate &&
+        r.endDate >= weekStartDate
+      ) {
+        const devNames = Array.isArray(r.devEntries)
+          ? (r.devEntries as Array<{ developBy?: string }>).map((e) => e.developBy).filter(Boolean)
+          : []
+        list.push({
+          sourceRefId: `plan-${r.id}`,
+          itemType: "planned",
+          title: `${p.name} — ${r.version} มีแผนงานในสัปดาห์นี้`,
+          subtitle: `Phase: ${PHASE_LABELS[r.phase] ?? r.phase} · Progress ${r.progressPercent}%`,
+          projectName: p.name,
+          owner: devNames.length > 0 ? devNames.join(", ") : null,
+          score: 50,
         })
       }
     }
