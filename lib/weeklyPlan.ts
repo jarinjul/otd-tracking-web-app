@@ -1,5 +1,18 @@
 import { prisma } from "@/lib/prisma"
-import { weekStart as computeWeekStart, addDays } from "@/lib/utils/date"
+import { addDays } from "@/lib/utils/date"
+
+// Parse a "YYYY-MM-DD" param into UTC midnight Monday of that week. Must be timezone-independent
+// (not the server's local time) — this runs on both a GMT+7 dev machine and Vercel's UTC servers,
+// and both must produce the exact same instant so the same logical week always maps to the same
+// WeekPlan row (weekStart is @unique).
+function normalizeWeekStart(param: string): Date {
+  const [y, m, d] = param.split("-").map(Number)
+  const date = new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1))
+  const day = date.getUTCDay()
+  const diff = day === 0 ? -6 : 1 - day
+  date.setUTCDate(date.getUTCDate() + diff)
+  return date
+}
 
 interface AutoItem {
   sourceRefId: string
@@ -91,8 +104,8 @@ async function generateAutoItems(weekStartDate: Date): Promise<AutoItem[]> {
   return list.sort((a, b) => b.score - a.score).slice(0, 15)
 }
 
-export async function getOrCreateWeekPlan(rawWeekStart: Date) {
-  const normalized = computeWeekStart(rawWeekStart)
+export async function getOrCreateWeekPlan(weekParam: string) {
+  const normalized = normalizeWeekStart(weekParam)
 
   let plan = await prisma.weekPlan.findUnique({
     where: { weekStart: normalized },
@@ -152,9 +165,9 @@ export async function getOrCreateWeekPlan(rawWeekStart: Date) {
   })
 }
 
-export async function syncAutoItems(rawWeekStart: Date) {
-  const normalized = computeWeekStart(rawWeekStart)
-  const plan = await getOrCreateWeekPlan(normalized)
+export async function syncAutoItems(weekParam: string) {
+  const normalized = normalizeWeekStart(weekParam)
+  const plan = await getOrCreateWeekPlan(weekParam)
   const existingRefs = new Set(plan.items.map((i) => i.sourceRefId).filter(Boolean))
 
   const autoItems = await generateAutoItems(normalized)

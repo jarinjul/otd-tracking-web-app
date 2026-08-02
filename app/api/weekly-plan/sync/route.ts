@@ -1,13 +1,11 @@
 import { NextRequest } from "next/server"
 import { syncAutoItems } from "@/lib/weeklyPlan"
-import { parseDateParam } from "@/lib/utils/date"
 
 export async function POST(req: NextRequest) {
-  const weekParam = req.nextUrl.searchParams.get("week")
-  const date = weekParam ? parseDateParam(weekParam) : new Date()
-  if (isNaN(date.getTime())) {
+  const weekParam = req.nextUrl.searchParams.get("week") ?? new Date().toISOString().slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(weekParam)) {
     return Response.json({ error: "Invalid week date" }, { status: 400 })
   }
-  const plan = await syncAutoItems(date)
+  const plan = await syncAutoItems(weekParam)
   return Response.json(plan)
 }
