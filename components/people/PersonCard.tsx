@@ -45,17 +45,17 @@ export function PersonCard({ person, projects }: PersonCardProps) {
           <div>
             <p className="text-xs font-medium text-text-muted mb-1.5">Working on now</p>
             <div className="flex flex-col gap-1">
-              {focus.releases.slice(0, 2).map((r) => (
+              {focus.releases.slice(0, 8).map((r) => (
                 <div key={r.releaseId} className="flex items-center justify-between gap-2 text-xs">
                   <span className="text-text-muted truncate">{r.projectName} · {r.version}</span>
                   <span className="font-medium text-text-primary shrink-0">{Math.round(r.hours)}h</span>
                 </div>
               ))}
-              {focus.releases.length > 2 && (
+              {focus.releases.length > 8 && (
                 <div className="flex items-center justify-between gap-2 text-xs">
-                  <span className="text-text-muted">+{focus.releases.length - 2} more release{focus.releases.length - 2 > 1 ? "s" : ""}</span>
+                  <span className="text-text-muted">+{focus.releases.length - 8} more release{focus.releases.length - 8 > 1 ? "s" : ""}</span>
                   <span className="font-medium text-text-primary shrink-0">
-                    {Math.round(focus.releases.slice(2).reduce((s, r) => s + r.hours, 0))}h
+                    {Math.round(focus.releases.slice(8).reduce((s, r) => s + r.hours, 0))}h
                   </span>
                 </div>
               )}
