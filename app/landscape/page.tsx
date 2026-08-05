@@ -86,7 +86,16 @@ export default function LandscapePage() {
 
         <TeamCard title="Operation Team">
           <SubBox title="Operation Dashboard">
-            <span>Operation Monitoring Management</span>
+            <div className="flex flex-col gap-1">
+              <span>Operation Monitoring Management</span>
+              <div className="flex flex-wrap gap-1">
+                {(["New App", "Internal Use"] as ProductTag[]).map((tag) => (
+                  <span key={tag} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${TAG_STYLE[tag]}`}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
           </SubBox>
         </TeamCard>
       </div>
