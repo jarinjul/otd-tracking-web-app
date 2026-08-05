@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart2, GitBranch, FileText, Users, Download, Building2, ListChecks, Gauge } from "lucide-react"
+import { BarChart2, GitBranch, FileText, Users, Download, Building2, ListChecks, Gauge, Network } from "lucide-react"
 
 // Hub-and-spoke mark: a central node radiating to six satellites — the Nexus Hub brand icon.
 function NexusIcon({ size = 20, className }: { size?: number; className?: string }) {
@@ -35,6 +35,7 @@ const NAV_ITEMS = [
   { href: "/workspace",    label: "PRD Center",   icon: FileText   },
   { href: "/people",       label: "People",       icon: Users      },
   { href: "/vendors",      label: "Vendors",      icon: Building2  },
+  { href: "/landscape",    label: "Landscape",    icon: Network    },
 ]
 
 export function Navbar() {
