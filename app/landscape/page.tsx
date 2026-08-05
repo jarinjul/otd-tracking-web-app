@@ -45,7 +45,7 @@ export default function LandscapePage() {
         <p className="text-text-muted mt-1">แผนภาพภาพรวม: ทีม เครื่องมือ และ software ทั้งหมดที่เชื่อมโยงกัน</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
         <TeamCard title="Tech Development Team">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <SubBox title="Requirements & Design">
