@@ -78,8 +78,7 @@ export default function LandscapePage() {
 
         <TeamCard title="Operation Team">
           <SubBox title="Operation Dashboard">
-            <span>Operation Monitoring</span>
-            <span>Management</span>
+            <span>Operation Monitoring Management</span>
           </SubBox>
         </TeamCard>
       </div>
