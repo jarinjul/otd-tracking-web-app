@@ -24,16 +24,25 @@ function SubBox({ title, children }: { title: string; children: React.ReactNode 
   )
 }
 
-const REPCONEX_PRODUCTS = [
-  "Competency Professional REPCO",
-  "DBT (Digital Boiler Twin)",
-  "Web repconexis.com",
-  "ROOTS",
-  "SFNEX (Smart Flow NEX)",
-  "SmartOFA NEX",
-  "UHM (Unified Health Management)",
-  "UOC Landing Page for UHM",
-  "AIMS",
+type ProductTag = "New App" | "Upgrade Tech stack" | "Internal Use" | "Global Use"
+
+const TAG_STYLE: Record<ProductTag, string> = {
+  "New App": "bg-rag-green-light text-rag-green-text",
+  "Upgrade Tech stack": "bg-rag-amber-light text-rag-amber-text",
+  "Internal Use": "bg-gray-100 text-gray-600",
+  "Global Use": "bg-accent-light text-accent",
+}
+
+const REPCONEX_PRODUCTS: { name: string; tags: ProductTag[] }[] = [
+  { name: "Competency Professional REPCO", tags: ["New App", "Internal Use"] },
+  { name: "DBT (Digital Boiler Twin)", tags: ["Upgrade Tech stack", "Global Use"] },
+  { name: "Web repconexis.com", tags: ["Upgrade Tech stack", "Global Use"] },
+  { name: "ROOTS", tags: ["Global Use"] },
+  { name: "SFNEX (Smart Flow NEX)", tags: ["New App", "Global Use"] },
+  { name: "SmartOFA NEX", tags: ["New App", "Global Use"] },
+  { name: "UHM (Unified Health Management)", tags: ["Upgrade Tech stack", "Global Use"] },
+  { name: "UOC Landing Page for UHM", tags: ["New App", "Internal Use"] },
+  { name: "AIMS", tags: ["Global Use"] },
 ]
 
 export default function LandscapePage() {
@@ -101,13 +110,22 @@ export default function LandscapePage() {
           <p className="text-xs text-text-muted mb-3">Tracks every project · 23 total</p>
 
           <div className="rounded-lg border border-dashed border-border p-4">
-            <p className="text-xs font-bold text-text-primary mb-2">REPCONEX Software Platform</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5 text-sm text-text-primary">
-              {REPCONEX_PRODUCTS.map((name) => (
-                <span key={name} className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-                  {name}
-                </span>
+            <p className="text-xs font-bold text-text-primary mb-3">REPCONEX Software Platform</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+              {REPCONEX_PRODUCTS.map((product) => (
+                <div key={product.name} className="flex flex-col gap-1">
+                  <span className="flex items-center gap-2 text-sm text-text-primary">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                    {product.name}
+                  </span>
+                  <div className="flex flex-wrap gap-1 pl-3.5">
+                    {product.tags.map((tag) => (
+                      <span key={tag} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${TAG_STYLE[tag]}`}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
