@@ -84,9 +84,15 @@ export default function LandscapePage() {
         </TeamCard>
       </div>
 
-      <div className="flex items-center justify-center gap-2 py-3 text-text-muted">
-        <ArrowUpDown size={18} />
-        <span className="text-xs">เชื่อมโยงข้อมูล & แจ้งเตือนระหว่างทีม</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="flex items-center justify-center gap-2 py-3 text-text-muted">
+          <ArrowUpDown size={18} />
+          <span className="text-xs">เชื่อมโยงข้อมูล & แจ้งเตือน</span>
+        </div>
+        <div className="flex items-center justify-center gap-2 py-3 text-text-muted">
+          <ArrowUpDown size={18} />
+          <span className="text-xs">เชื่อมโยงข้อมูล & แจ้งเตือน</span>
+        </div>
       </div>
 
       <div className="rounded-2xl border-2 border-dashed border-accent/40 bg-accent-light/40 p-5">
