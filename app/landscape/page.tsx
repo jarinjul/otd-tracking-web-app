@@ -33,7 +33,6 @@ const REPCONEX_PRODUCTS = [
   "SmartOFA NEX",
   "UHM (Unified Health Management)",
   "UOC Landing Page for UHM",
-  "ZenithNEX",
   "AIMS",
 ]
 
