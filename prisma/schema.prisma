@@ -325,3 +325,14 @@ model InterruptTask {
   @@index([personId])
   @@index([date])
 }
+
+// One computed snapshot per calendar month, for month-over-month comparison
+// in the Monthly report tab. `data` is plain JSON (not normalized columns) so
+// old snapshots stay readable even as the app's own schema evolves later.
+model MonthlySnapshot {
+  id        String   @id @default(cuid())
+  month     DateTime @unique // UTC midnight on the 1st of the month
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
