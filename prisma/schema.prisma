@@ -71,6 +71,7 @@ model Person {
   monthlyCapacityHours Int               @default(160)
   memberships          ProjectMember[]
   workloadEntries      ReleaseWorkload[]
+  interrupts           InterruptTask[]
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
 }
@@ -112,6 +113,7 @@ model Project {
 
   teamMembers ProjectMember[]
   releases    Release[]
+  interrupts  InterruptTask[]
 
   createdAt DateTime @default(now())
 }
@@ -302,4 +304,24 @@ model WeekPlanItem {
   updatedAt  DateTime       @updatedAt
 
   @@index([weekPlanId])
+}
+
+// Unplanned work logged against a person — replaces the paper log the team
+// used before. Hours here count against monthly capacity alongside planned
+// ReleaseWorkload entries.
+model InterruptTask {
+  id        String   @id @default(cuid())
+  date      DateTime // UTC midnight of the day the interrupt happened
+  person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId  String
+  hours     Float
+  source    String // who asked for it, e.g. "PO SmartOFA", "หน่วยงานบัญชี" — free text
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectId String?
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([personId])
+  @@index([date])
 }

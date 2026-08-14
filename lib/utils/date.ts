@@ -73,6 +73,17 @@ export function parseDateParam(param: string): Date {
   return new Date(y, (m ?? 1) - 1, d ?? 1)
 }
 
+/**
+ * Parse a YYYY-MM-DD string as UTC midnight. Server-only — use this (not
+ * parseDateParam above) anywhere a Date gets stored/queried against the DB,
+ * since API routes run on both a GMT+7 dev machine and Vercel's UTC servers
+ * and both must produce the exact same instant for the same calendar day.
+ */
+export function parseDateParamUTC(param: string): Date {
+  const [y, m, d] = param.split("-").map(Number)
+  return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1))
+}
+
 /** Format month label for Gantt header */
 export function ganttMonthLabel(date: Date): string {
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" })

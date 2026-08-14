@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart2, GitBranch, FileText, Users, Download, Building2, ListChecks, Gauge, Network } from "lucide-react"
+import { BarChart2, GitBranch, FileText, Users, Download, Building2, ListChecks, Gauge, Network, Zap } from "lucide-react"
 import { NexusIcon } from "@/components/ui/NexusIcon"
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/weekly-plan",  label: "Weekly Plan",  icon: ListChecks },
   { href: "/gantt",        label: "Gantt",        icon: GitBranch  },
   { href: "/workload",     label: "Workload",     icon: Gauge      },
+  { href: "/interrupts",   label: "Interrupts",   icon: Zap        },
   { href: "/workspace",    label: "PRD Center",   icon: FileText   },
   { href: "/people",       label: "People",       icon: Users      },
   { href: "/vendors",      label: "Vendors",      icon: Building2  },

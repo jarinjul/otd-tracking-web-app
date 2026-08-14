@@ -46,11 +46,19 @@ interface RawPerson {
   name: string
   memberships: { allocationPercent: number | null; startDate: string; endDate: string | null }[]
 }
+interface RawInterrupt {
+  id: string
+  date: string
+  hours: number
+  source: string
+  person: { name: string }
+}
 
 interface WeeklyPlanClientProps {
   projects: RawProject[]
   nextSteps: RawNextStep[]
   people: RawPerson[]
+  interrupts: RawInterrupt[]
 }
 
 const PRIORITY_SCORE: Record<Priority, number> = { high: 0, medium: 1, low: 2 }
@@ -67,7 +75,7 @@ function pickActiveRelease(releases: RawRelease[]): RawRelease | null {
   })[0]
 }
 
-export function WeeklyPlanClient({ projects, nextSteps, people }: WeeklyPlanClientProps) {
+export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: WeeklyPlanClientProps) {
   const today = useMemo(() => new Date(), [])
   const currentWeekStart = useMemo(() => computeWeekStart(today), [today])
   const [selectedWeekStart, setSelectedWeekStart] = useState(currentWeekStart)
@@ -201,6 +209,15 @@ export function WeeklyPlanClient({ projects, nextSteps, people }: WeeklyPlanClie
     })
   }, [nextSteps, people, selectedWeekStart, selectedWeekEnd, today])
 
+  const weekInterrupts = useMemo(
+    () => interrupts.filter((i) => {
+      const d = new Date(i.date)
+      return d >= selectedWeekStart && d <= selectedWeekEnd
+    }),
+    [interrupts, selectedWeekStart, selectedWeekEnd]
+  )
+  const weekInterruptHours = useMemo(() => weekInterrupts.reduce((s, i) => s + i.hours, 0), [weekInterrupts])
+
   const projectHealth: ProjectHealthRow[] = useMemo(() => {
     return projects.map((p) => {
       const active = pickActiveRelease(p.releases)
@@ -255,6 +272,27 @@ export function WeeklyPlanClient({ projects, nextSteps, people }: WeeklyPlanClie
               onSync={handleSync}
               syncing={syncing}
             />
+          )}
+
+          {weekInterrupts.length > 0 && (
+            <div className="rounded-xl border mt-4 p-4" style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-text-muted">
+                  งานแทรกสัปดาห์นี้ ({weekInterrupts.length})
+                </p>
+                <p className="text-xs font-semibold text-text-primary">{weekInterruptHours}h รวม</p>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {weekInterrupts.map((i) => (
+                  <div key={i.id} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-text-muted truncate">
+                      {toDateParam(new Date(i.date))} · {i.person.name} · {i.source}
+                    </span>
+                    <span className="font-medium text-text-primary shrink-0">{i.hours}h</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
         <div className="col-span-1">

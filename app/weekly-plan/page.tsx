@@ -5,7 +5,7 @@ export const metadata = { title: "Weekly Plan — Zenith Hub" }
 export const dynamic = "force-dynamic"
 
 export default async function WeeklyPlanPage() {
-  const [projects, nextSteps, people] = await Promise.all([
+  const [projects, nextSteps, people, interrupts] = await Promise.all([
     prisma.project.findMany({
       include: {
         releases: { orderBy: { startDate: "desc" } },
@@ -21,6 +21,10 @@ export default async function WeeklyPlanPage() {
       include: { memberships: { select: { allocationPercent: true, startDate: true, endDate: true } } },
       orderBy: { name: "asc" },
     }),
+    prisma.interruptTask.findMany({
+      select: { id: true, date: true, hours: true, source: true, person: { select: { name: true } } },
+      orderBy: { date: "desc" },
+    }),
   ])
 
   const flatNextSteps = nextSteps.map((s: any) => ({ ...s, project: s.release.project }))
@@ -30,6 +34,7 @@ export default async function WeeklyPlanPage() {
       projects={projects as any}
       nextSteps={flatNextSteps as any}
       people={people as any}
+      interrupts={interrupts as any}
     />
   )
 }
