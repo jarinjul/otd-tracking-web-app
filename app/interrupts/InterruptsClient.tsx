@@ -36,7 +36,7 @@ function addMonths(key: string, delta: number): string {
   return monthKey(d)
 }
 
-const inputStyle = { borderColor: "var(--color-border)", background: "white", color: "var(--color-text-primary)" }
+const inputStyle = { borderColor: "var(--color-border)", background: "var(--color-card)", color: "var(--color-text-primary)" }
 
 export function InterruptsClient({ people, projects, entries: initialEntries }: InterruptsClientProps) {
   const [entries, setEntries] = useState<EntryOpt[]>(initialEntries)

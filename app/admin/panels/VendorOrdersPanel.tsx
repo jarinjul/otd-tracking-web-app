@@ -139,7 +139,7 @@ export function VendorOrdersPanel() {
         className="rounded-xl border-2 border-dashed mb-6 px-6 py-8 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors"
         style={{
           borderColor: dragOver ? "var(--color-accent)" : "var(--color-border)",
-          background: dragOver ? "var(--color-accent-light)" : "white",
+          background: dragOver ? "var(--color-accent-light)" : "var(--color-card)",
         }}
       >
         <input
@@ -179,7 +179,7 @@ export function VendorOrdersPanel() {
       <div className="flex items-center justify-between mb-4">
         <select
           className="px-3 py-2 text-sm rounded-lg border"
-          style={{ borderColor: "var(--color-border)", background: "white", color: "var(--color-text-primary)" }}
+          style={{ borderColor: "var(--color-border)", background: "var(--color-card)", color: "var(--color-text-primary)" }}
           value={vendorFilter}
           onChange={(e) => setVendorFilter(e.target.value)}
         >
@@ -192,7 +192,7 @@ export function VendorOrdersPanel() {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border overflow-x-auto" style={{ borderColor: "var(--color-border)", background: "white" }}>
+      <div className="rounded-xl border overflow-x-auto" style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}>
         {loading ? (
           <div className="py-16 text-center text-sm" style={{ color: "var(--color-text-muted)" }}>Loading…</div>
         ) : filtered.length === 0 ? (
@@ -239,7 +239,7 @@ export function VendorOrdersPanel() {
       {confirmDelete && (
         <>
           <div className="fixed inset-0 z-50" style={{ background: "rgba(0,0,0,0.4)" }} />
-          <div className="fixed z-50 rounded-xl p-6 shadow-xl" style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 360, background: "white" }}>
+          <div className="fixed z-50 rounded-xl p-6 shadow-xl" style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 360, background: "var(--color-card)" }}>
             <h3 className="font-bold text-base mb-2" style={{ color: "var(--color-text-primary)" }}>Delete Record?</h3>
             <p className="text-sm mb-5" style={{ color: "var(--color-text-muted)" }}>This vendor order record will be permanently removed.</p>
             <div className="flex gap-3">

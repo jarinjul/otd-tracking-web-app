@@ -56,7 +56,7 @@ function cellKey(releaseId: string, personId: string, month: string) {
   return `${releaseId}::${personId}::${month}`
 }
 
-const inputStyle = { borderColor: "var(--color-border)", background: "white", color: "var(--color-text-primary)" }
+const inputStyle = { borderColor: "var(--color-border)", background: "var(--color-card)", color: "var(--color-text-primary)" }
 
 export function WorkloadClient({ projects, people, entries }: WorkloadClientProps) {
   const [hours, setHours] = useState<Record<string, number>>(() => {
@@ -258,7 +258,7 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
 
       <div className="flex-1 overflow-auto px-6 pb-8">
         {/* ── Team Workload Report ── */}
-        <div className="rounded-xl border p-5 mb-6" style={{ borderColor: "var(--color-border)", background: "white" }}>
+        <div className="rounded-xl border p-5 mb-6" style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}>
           <p className="text-sm font-semibold mb-4" style={{ color: "var(--color-text-primary)" }}>
             Team Workload Report — {monthLabel(effectiveMonth)}
           </p>
@@ -305,7 +305,7 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
                 {breakdown.length > 0 && (
                   <div
                     className="hidden group-hover:block absolute z-20 top-full mt-1.5 left-0 rounded-xl border p-3"
-                    style={{ borderColor: "var(--color-border)", background: "white", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", width: 220 }}
+                    style={{ borderColor: "var(--color-border)", background: "var(--color-card)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", width: 220 }}
                   >
                     <p className="text-xs mb-2" style={{ color: "var(--color-text-muted)" }}>{person.name} · {monthLabel(effectiveMonth)} · {total}h</p>
                     <div className="flex flex-col gap-1.5">
@@ -391,7 +391,7 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
                               {breakdown.length > 0 && (
                                 <div
                                   className="hidden group-hover:block absolute z-20 top-full mt-1 left-0 rounded-xl border p-2.5"
-                                  style={{ borderColor: "var(--color-border)", background: "white", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", width: 200 }}
+                                  style={{ borderColor: "var(--color-border)", background: "var(--color-card)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", width: 200 }}
                                 >
                                   <p className="text-xs mb-1.5" style={{ color: "var(--color-text-muted)" }}>{p.name} · {monthLabel(m)} · {total}h</p>
                                   <div className="flex flex-col gap-1">
@@ -423,7 +423,7 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
           )}
         </div>
 
-        <div className="rounded-xl border overflow-x-auto" style={{ borderColor: "var(--color-border)", background: "white" }}>
+        <div className="rounded-xl border overflow-x-auto" style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}>
           <table className="text-sm border-collapse">
             <thead>
               <tr style={{ background: "var(--color-surface)", borderBottom: "1px solid var(--color-border)" }}>
@@ -478,7 +478,7 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
 
                     {isExpanded && project.releases.length === 0 && (
                       <tr style={{ borderTop: "1px solid var(--color-border)" }}>
-                        <td className="pl-9 pr-4 py-2.5 text-xs italic sticky left-0" style={{ color: "var(--color-text-muted)", background: "white" }}>
+                        <td className="pl-9 pr-4 py-2.5 text-xs italic sticky left-0" style={{ color: "var(--color-text-muted)", background: "var(--color-card)" }}>
                           No releases yet
                         </td>
                         {people.map((p) => <td key={p.id} />)}
@@ -487,7 +487,7 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
 
                     {isExpanded && project.releases.map((r) => (
                       <tr key={r.id} style={{ borderTop: "1px solid var(--color-border)" }}>
-                        <td className="pl-9 pr-4 py-2 text-xs whitespace-nowrap sticky left-0" style={{ background: "white" }}>
+                        <td className="pl-9 pr-4 py-2 text-xs whitespace-nowrap sticky left-0" style={{ background: "var(--color-card)" }}>
                           <span className="font-semibold" style={{ color: "var(--color-accent)" }}>{r.version}</span>
                           <span className="ml-2" style={{ color: "var(--color-text-muted)" }}>{STATUS_LABEL[r.status] ?? r.status}</span>
                         </td>
@@ -514,7 +514,7 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
                                 <div
                                   ref={popoverRef}
                                   className="absolute z-20 top-full mt-1.5 rounded-xl border p-3 text-left"
-                                  style={{ borderColor: "var(--color-border)", background: "white", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", width: 260, left: "50%", transform: "translateX(-50%)" }}
+                                  style={{ borderColor: "var(--color-border)", background: "var(--color-card)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", width: 260, left: "50%", transform: "translateX(-50%)" }}
                                 >
                                   <p className="text-xs font-medium mb-2" style={{ color: "var(--color-text-muted)" }}>
                                     {p.name} · {r.version}
@@ -579,7 +579,7 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
                 ))}
               </tr>
               <tr style={{ borderTop: "1px solid var(--color-border)" }}>
-                <td className="px-4 py-2 text-xs font-semibold sticky left-0" style={{ color: "var(--color-text-primary)", background: "white" }}>
+                <td className="px-4 py-2 text-xs font-semibold sticky left-0" style={{ color: "var(--color-text-primary)", background: "var(--color-card)" }}>
                   Total Hours ({monthLabel(effectiveMonth)})
                 </td>
                 {people.map((p) => (
@@ -589,7 +589,7 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
                 ))}
               </tr>
               <tr style={{ borderTop: "1px solid var(--color-border)" }}>
-                <td className="px-4 py-2 text-xs sticky left-0" style={{ color: "var(--color-text-muted)", background: "white" }}>
+                <td className="px-4 py-2 text-xs sticky left-0" style={{ color: "var(--color-text-muted)", background: "var(--color-card)" }}>
                   Target Capacity ({Math.round(TARGET_RATIO * 100)}%)
                 </td>
                 {people.map((p) => (
@@ -599,7 +599,7 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
                 ))}
               </tr>
               <tr style={{ borderTop: "1px solid var(--color-border)" }}>
-                <td className="px-4 py-2.5 text-xs font-semibold sticky left-0" style={{ color: "var(--color-text-primary)", background: "white" }}>
+                <td className="px-4 py-2.5 text-xs font-semibold sticky left-0" style={{ color: "var(--color-text-primary)", background: "var(--color-card)" }}>
                   Project Workload % ({monthLabel(effectiveMonth)})
                 </td>
                 {people.map((p) => {
@@ -617,7 +617,7 @@ export function WorkloadClient({ projects, people, entries }: WorkloadClientProp
                 })}
               </tr>
               <tr style={{ borderTop: "1px solid var(--color-border)" }}>
-                <td className="px-4 py-2 text-xs italic sticky left-0" style={{ color: "var(--color-text-muted)", background: "white" }}>
+                <td className="px-4 py-2 text-xs italic sticky left-0" style={{ color: "var(--color-text-muted)", background: "var(--color-card)" }}>
                   Total Hours (all months)
                 </td>
                 {people.map((p) => (

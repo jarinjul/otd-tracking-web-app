@@ -1,4 +1,4 @@
-const inputStyle = { borderColor: "var(--color-border)", background: "white" }
+const inputStyle = { borderColor: "var(--color-border)", background: "var(--color-card)" }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

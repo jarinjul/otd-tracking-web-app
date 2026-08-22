@@ -54,7 +54,7 @@ function Field({ label, helper, children }: { label: string; helper?: string; ch
 }
 
 const inputCls = "w-full px-3 py-2 text-sm rounded-lg border outline-none focus:ring-2"
-const inputStyle = { borderColor: "var(--color-border)", background: "white", color: "var(--color-text-primary)" }
+const inputStyle = { borderColor: "var(--color-border)", background: "var(--color-card)", color: "var(--color-text-primary)" }
 const miniLabelCls = "text-xs font-medium mb-1 block"
 
 export function ProjectMembersPanel() {
@@ -258,7 +258,7 @@ export function ProjectMembersPanel() {
       )}
 
       {/* Table — one row per project */}
-      <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--color-border)", background: "white" }}>
+      <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}>
         {loading ? (
           <div className="py-16 text-center text-sm" style={{ color: "var(--color-text-muted)" }}>Loading…</div>
         ) : projectGroups.length === 0 ? (
@@ -330,7 +330,7 @@ export function ProjectMembersPanel() {
           <div className="fixed inset-0 z-[60]" style={{ background: "rgba(0,0,0,0.3)" }} onClick={() => setAddOpen(false)} />
           <div
             className="fixed top-0 right-0 h-full z-[61] flex flex-col overflow-hidden"
-            style={{ width: 560, background: "white", boxShadow: "-4px 0 24px rgba(0,0,0,0.12)" }}
+            style={{ width: 560, background: "var(--color-card)", boxShadow: "-4px 0 24px rgba(0,0,0,0.12)" }}
           >
             <div className="px-6 py-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--color-border)" }}>
               <h2 className="font-bold text-base" style={{ color: "var(--color-text-primary)" }}>Add Members to Project</h2>
@@ -392,7 +392,7 @@ export function ProjectMembersPanel() {
                         type="button"
                         onClick={() => removeAddEntry(i)}
                         className="absolute top-2 right-2 w-5 h-5 rounded-full text-xs flex items-center justify-center border"
-                        style={{ borderColor: "var(--color-border)", color: "var(--color-rag-red)", background: "white" }}
+                        style={{ borderColor: "var(--color-border)", color: "var(--color-rag-red)", background: "var(--color-card)" }}
                         title="ลบชุดนี้"
                       >
                         ✕
@@ -458,7 +458,7 @@ export function ProjectMembersPanel() {
           <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.3)" }} onClick={() => setDetailProjectId(null)} />
           <div
             className="fixed top-0 right-0 h-full z-50 flex flex-col overflow-hidden"
-            style={{ width: 560, background: "white", boxShadow: "-4px 0 24px rgba(0,0,0,0.12)" }}
+            style={{ width: 560, background: "var(--color-card)", boxShadow: "-4px 0 24px rgba(0,0,0,0.12)" }}
           >
             <div className="px-6 py-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--color-border)" }}>
               <div>
@@ -554,7 +554,7 @@ export function ProjectMembersPanel() {
           <div className="fixed inset-0 z-[70]" style={{ background: "rgba(0,0,0,0.4)" }} />
           <div
             className="fixed z-[71] rounded-xl p-6 shadow-xl"
-            style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 360, background: "white" }}
+            style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 360, background: "var(--color-card)" }}
           >
             <h3 className="font-bold text-base mb-2" style={{ color: "var(--color-text-primary)" }}>Remove Member?</h3>
             <p className="text-sm mb-5" style={{ color: "var(--color-text-muted)" }}>

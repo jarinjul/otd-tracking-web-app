@@ -77,7 +77,7 @@ const inputCls =
   "w-full px-3 py-2 text-sm rounded-lg border outline-none focus:ring-2"
 const inputStyle = {
   borderColor: "var(--color-border)",
-  background: "white",
+  background: "var(--color-card)",
   color: "var(--color-text-primary)",
 }
 
@@ -258,7 +258,7 @@ export function ProjectsPanel() {
       )}
 
       {/* Table */}
-      <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--color-border)", background: "white" }}>
+      <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}>
         {loading ? (
           <div className="py-16 text-center text-sm" style={{ color: "var(--color-text-muted)" }}>
             Loading…
@@ -325,7 +325,7 @@ export function ProjectsPanel() {
           {/* Panel */}
           <div
             className="fixed top-0 right-0 h-full z-50 flex flex-col overflow-hidden"
-            style={{ width: 560, background: "white", boxShadow: "-4px 0 24px rgba(0,0,0,0.12)" }}
+            style={{ width: 560, background: "var(--color-card)", boxShadow: "-4px 0 24px rgba(0,0,0,0.12)" }}
           >
             {/* Drawer header */}
             <div
@@ -414,7 +414,7 @@ export function ProjectsPanel() {
                   {bucketInfoOpen && (
                     <div
                       className="absolute z-10 top-full left-0 mt-1 rounded-xl border shadow-lg p-4 flex flex-col gap-2.5"
-                      style={{ width: 420, background: "white", borderColor: "var(--color-border)" }}
+                      style={{ width: 420, background: "var(--color-card)", borderColor: "var(--color-border)" }}
                     >
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-bold" style={{ color: "var(--color-text-primary)" }}>
@@ -598,7 +598,7 @@ export function ProjectsPanel() {
               left: "50%",
               transform: "translate(-50%,-50%)",
               width: 360,
-              background: "white",
+              background: "var(--color-card)",
             }}
           >
             <h3 className="font-bold text-base mb-2" style={{ color: "var(--color-text-primary)" }}>

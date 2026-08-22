@@ -179,7 +179,7 @@ function Field({ label, helper, children }: { label: string; helper?: string; ch
   )
 }
 const inputCls = "w-full px-3 py-2 text-sm rounded-lg border outline-none focus:ring-2"
-const inputStyle = { borderColor: "var(--color-border)", background: "white", color: "var(--color-text-primary)" }
+const inputStyle = { borderColor: "var(--color-border)", background: "var(--color-card)", color: "var(--color-text-primary)" }
 const miniLabelCls = "text-xs font-medium mb-1 block"
 
 function humanCostOf(e: DevEntry): number {
@@ -579,11 +579,11 @@ export function ReleasesPanel() {
       {/* Cost summary cards */}
       {totals.internal > 0 && (
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="rounded-xl border p-4" style={{ borderColor: "var(--color-border)", background: "white" }}>
+          <div className="rounded-xl border p-4" style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}>
             <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--color-text-muted)" }}>Internal Dev + AI Total</p>
             <p className="text-xl font-bold tabular-nums" style={{ color: "var(--color-accent)" }}>{fmtBaht(totals.internal)} ฿</p>
           </div>
-          <div className="rounded-xl border p-4" style={{ borderColor: "var(--color-border)", background: "white" }}>
+          <div className="rounded-xl border p-4" style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}>
             <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--color-text-muted)" }}>Vendor Quotes Total</p>
             <p className="text-xl font-bold tabular-nums" style={{ color: "var(--color-text-primary)" }}>{fmtBaht(totals.vendor)} ฿</p>
           </div>
@@ -603,7 +603,7 @@ export function ReleasesPanel() {
         </div>
       )}
 
-      <div className="rounded-xl border overflow-x-auto" style={{ borderColor: "var(--color-border)", background: "white" }}>
+      <div className="rounded-xl border overflow-x-auto" style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}>
         {loading ? <div className="py-16 text-center text-sm" style={{ color: "var(--color-text-muted)" }}>Loading…</div>
           : filteredReleases.length === 0 ? <div className="py-16 text-center text-sm" style={{ color: "var(--color-text-muted)" }}>{releases.length === 0 ? "No releases yet. Create one above." : "No releases match this filter."}</div>
           : (
@@ -762,7 +762,7 @@ export function ReleasesPanel() {
       {drawerOpen && (
         <>
           <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.3)" }} onClick={() => setDrawerOpen(false)} />
-          <div className="fixed top-0 right-0 h-full z-50 flex flex-col overflow-hidden" style={{ width: 560, background: "white", boxShadow: "-4px 0 24px rgba(0,0,0,0.12)" }}>
+          <div className="fixed top-0 right-0 h-full z-50 flex flex-col overflow-hidden" style={{ width: 560, background: "var(--color-card)", boxShadow: "-4px 0 24px rgba(0,0,0,0.12)" }}>
             <div className="px-6 py-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--color-border)" }}>
               <h2 className="font-bold text-base" style={{ color: "var(--color-text-primary)" }}>{editId ? "Edit Release" : "New Release"}</h2>
               <button onClick={() => setDrawerOpen(false)} className="text-lg leading-none" style={{ color: "var(--color-text-muted)" }}>✕</button>
@@ -798,7 +798,7 @@ export function ReleasesPanel() {
                 </p>
 
                 {versionInfoOpen && (
-                  <div className="absolute z-10 top-full left-0 mt-1 rounded-xl border shadow-lg p-4 flex flex-col gap-3" style={{ width: 420, background: "white", borderColor: "var(--color-border)" }}>
+                  <div className="absolute z-10 top-full left-0 mt-1 rounded-xl border shadow-lg p-4 flex flex-col gap-3" style={{ width: 420, background: "var(--color-card)", borderColor: "var(--color-border)" }}>
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-bold" style={{ color: "var(--color-text-primary)" }}>รูปแบบเลขเวอร์ชัน — เช่น 2026R1.1.0</p>
                       <button type="button" onClick={() => setVersionInfoOpen(false)} className="text-sm leading-none" style={{ color: "var(--color-text-muted)" }}>✕</button>
@@ -887,7 +887,7 @@ export function ReleasesPanel() {
                   <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>{PHASE_DESCRIPTIONS[form.phase] ?? ""}</p>
 
                   {phaseInfoOpen && (
-                    <div className="absolute z-10 top-full right-0 mt-1 rounded-xl border shadow-lg p-4 flex flex-col gap-2.5" style={{ width: 440, background: "white", borderColor: "var(--color-border)" }}>
+                    <div className="absolute z-10 top-full right-0 mt-1 rounded-xl border shadow-lg p-4 flex flex-col gap-2.5" style={{ width: 440, background: "var(--color-card)", borderColor: "var(--color-border)" }}>
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-bold" style={{ color: "var(--color-text-primary)" }}>Phase Definitions</p>
                         <button type="button" onClick={() => setPhaseInfoOpen(false)} className="text-sm leading-none" style={{ color: "var(--color-text-muted)" }}>✕</button>
@@ -965,7 +965,7 @@ export function ReleasesPanel() {
                         type="button"
                         onClick={() => removeDevEntry(i)}
                         className="absolute top-2 right-2 w-5 h-5 rounded-full text-xs flex items-center justify-center border"
-                        style={{ borderColor: "var(--color-border)", color: "var(--color-rag-red)", background: "white" }}
+                        style={{ borderColor: "var(--color-border)", color: "var(--color-rag-red)", background: "var(--color-card)" }}
                         title="ลบชุดนี้"
                       >
                         ✕
@@ -1033,7 +1033,7 @@ export function ReleasesPanel() {
                         type="button"
                         onClick={() => removeAiEntry(i)}
                         className="absolute top-2 right-2 w-5 h-5 rounded-full text-xs flex items-center justify-center border"
-                        style={{ borderColor: "var(--color-border)", color: "var(--color-rag-red)", background: "white" }}
+                        style={{ borderColor: "var(--color-border)", color: "var(--color-rag-red)", background: "var(--color-card)" }}
                         title="ลบชุดนี้"
                       >
                         ✕
@@ -1123,7 +1123,7 @@ export function ReleasesPanel() {
                     <p className="text-xs font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>💡 Ideas ({releaseIdeas.length})</p>
                     <div className="flex flex-col gap-1.5 mb-2">
                       {releaseIdeas.map((idea) => (
-                        <div key={idea.id} className="flex items-center gap-2 text-xs bg-white rounded-lg border px-2.5 py-1.5" style={{ borderColor: "var(--color-border)" }}>
+                        <div key={idea.id} className="flex items-center gap-2 text-xs bg-card rounded-lg border px-2.5 py-1.5" style={{ borderColor: "var(--color-border)" }}>
                           <span className="flex-1 min-w-0 truncate" style={{ color: "var(--color-text-primary)" }}>{idea.title}</span>
                           <select
                             className="text-xs rounded border px-1.5 py-0.5"
@@ -1149,7 +1149,7 @@ export function ReleasesPanel() {
                     <p className="text-xs font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>🚧 Blockers ({releaseBlockers.length})</p>
                     <div className="flex flex-col gap-1.5 mb-2">
                       {releaseBlockers.map((b) => (
-                        <div key={b.id} className="flex items-center gap-2 text-xs bg-white rounded-lg border px-2.5 py-1.5" style={{ borderColor: "var(--color-border)" }}>
+                        <div key={b.id} className="flex items-center gap-2 text-xs bg-card rounded-lg border px-2.5 py-1.5" style={{ borderColor: "var(--color-border)" }}>
                           <span className="shrink-0">{SEVERITY_OPTIONS.find((o) => o.value === b.severity)?.label.slice(0, 2) ?? ""}</span>
                           <span className="flex-1 min-w-0 truncate" style={{ color: "var(--color-text-primary)" }}>{b.description}</span>
                           <span className="shrink-0" style={{ color: "var(--color-text-muted)" }}>{b.owner}</span>
@@ -1176,7 +1176,7 @@ export function ReleasesPanel() {
                     <p className="text-xs font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>✅ Next Steps ({releaseNextSteps.length})</p>
                     <div className="flex flex-col gap-1.5 mb-2">
                       {releaseNextSteps.map((s) => (
-                        <div key={s.id} className="flex items-center gap-2 text-xs bg-white rounded-lg border px-2.5 py-1.5" style={{ borderColor: "var(--color-border)", opacity: s.done ? 0.6 : 1 }}>
+                        <div key={s.id} className="flex items-center gap-2 text-xs bg-card rounded-lg border px-2.5 py-1.5" style={{ borderColor: "var(--color-border)", opacity: s.done ? 0.6 : 1 }}>
                           <input type="checkbox" checked={s.done} onChange={() => toggleNextStepDone(s)} className="w-3.5 h-3.5 accent-accent shrink-0" />
                           <span className="flex-1 min-w-0 truncate" style={{ color: "var(--color-text-primary)", textDecoration: s.done ? "line-through" : "none" }}>{s.description}</span>
                           <span className="shrink-0" style={{ color: "var(--color-text-muted)" }}>{s.owner}{s.effortDays != null ? ` · ${s.effortDays}d` : ""}</span>
@@ -1204,7 +1204,7 @@ export function ReleasesPanel() {
                     <p className="text-xs font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>⚠️ Risks ({releaseRisks.length})</p>
                     <div className="flex flex-col gap-1.5 mb-2">
                       {releaseRisks.map((risk) => (
-                        <div key={risk.id} className="flex items-center gap-2 text-xs bg-white rounded-lg border px-2.5 py-1.5" style={{ borderColor: "var(--color-border)" }}>
+                        <div key={risk.id} className="flex items-center gap-2 text-xs bg-card rounded-lg border px-2.5 py-1.5" style={{ borderColor: "var(--color-border)" }}>
                           <span className="shrink-0" title="Likelihood">{SEVERITY_OPTIONS.find((o) => o.value === risk.likelihood)?.label.slice(0, 2) ?? ""}</span>
                           <span className="flex-1 min-w-0 truncate" style={{ color: "var(--color-text-primary)" }}>{risk.description}</span>
                           {risk.mitigation && <span className="shrink-0 italic" style={{ color: "var(--color-text-muted)" }}>↳ {risk.mitigation}</span>}
@@ -1243,7 +1243,7 @@ export function ReleasesPanel() {
       {confirmDelete && (
         <>
           <div className="fixed inset-0 z-50" style={{ background: "rgba(0,0,0,0.4)" }} />
-          <div className="fixed z-50 rounded-xl p-6 shadow-xl" style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 360, background: "white" }}>
+          <div className="fixed z-50 rounded-xl p-6 shadow-xl" style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 360, background: "var(--color-card)" }}>
             <h3 className="font-bold text-base mb-2" style={{ color: "var(--color-text-primary)" }}>Delete Release?</h3>
             <p className="text-sm mb-5" style={{ color: "var(--color-text-muted)" }}>This release record will be permanently removed.</p>
             <div className="flex gap-3">

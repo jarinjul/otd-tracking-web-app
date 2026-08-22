@@ -55,7 +55,7 @@ function LoginForm() {
             autoFocus
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm outline-none focus:ring-2 focus:ring-accent"
+            className="w-full px-3 py-2 rounded-lg border border-border bg-card text-sm outline-none focus:ring-2 focus:ring-accent"
             placeholder="••••••••"
           />
           {error && <p className="text-xs text-rag-red-text">{error}</p>}

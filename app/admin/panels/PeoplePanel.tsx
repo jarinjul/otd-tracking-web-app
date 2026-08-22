@@ -64,7 +64,7 @@ function Field({ label, helper, children }: { label: string; helper?: string; ch
 }
 
 const inputCls = "w-full px-3 py-2 text-sm rounded-lg border outline-none focus:ring-2"
-const inputStyle = { borderColor: "var(--color-border)", background: "white", color: "var(--color-text-primary)" }
+const inputStyle = { borderColor: "var(--color-border)", background: "var(--color-card)", color: "var(--color-text-primary)" }
 
 export function PeoplePanel() {
   const [people, setPeople] = useState<PersonRow[]>([])
@@ -222,7 +222,7 @@ export function PeoplePanel() {
       )}
 
       {/* Table */}
-      <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--color-border)", background: "white" }}>
+      <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}>
         {loading ? (
           <div className="py-16 text-center text-sm" style={{ color: "var(--color-text-muted)" }}>Loading…</div>
         ) : people.length === 0 ? (
@@ -298,7 +298,7 @@ export function PeoplePanel() {
           <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.3)" }} onClick={() => setDrawerOpen(false)} />
           <div
             className="fixed top-0 right-0 h-full z-50 flex flex-col overflow-hidden"
-            style={{ width: 480, background: "white", boxShadow: "-4px 0 24px rgba(0,0,0,0.12)" }}
+            style={{ width: 480, background: "var(--color-card)", boxShadow: "-4px 0 24px rgba(0,0,0,0.12)" }}
           >
             <div className="px-6 py-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--color-border)" }}>
               <h2 className="font-bold text-base" style={{ color: "var(--color-text-primary)" }}>
@@ -443,7 +443,7 @@ export function PeoplePanel() {
           <div className="fixed inset-0 z-50" style={{ background: "rgba(0,0,0,0.4)" }} />
           <div
             className="fixed z-50 rounded-xl p-6 shadow-xl"
-            style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 360, background: "white" }}
+            style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 360, background: "var(--color-card)" }}
           >
             <h3 className="font-bold text-base mb-2" style={{ color: "var(--color-text-primary)" }}>Delete Person?</h3>
             <p className="text-sm mb-5" style={{ color: "var(--color-text-muted)" }}>

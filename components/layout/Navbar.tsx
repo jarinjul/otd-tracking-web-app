@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { BarChart2, GitBranch, FileText, Users, Download, Building2, ListChecks, Gauge, Network, Zap, LogOut } from "lucide-react"
 import { NexusIcon } from "@/components/ui/NexusIcon"
+import { ThemeToggle } from "@/components/layout/ThemeToggle"
 
 const NAV_ITEMS = [
   { href: "/dashboard",    label: "Dashboard",    icon: BarChart2  },
@@ -69,6 +70,8 @@ export function Navbar() {
           <Download size={15} />
           <span>Export</span>
         </Link>
+
+        <ThemeToggle />
 
         {/* Admin — subtle link */}
         <Link

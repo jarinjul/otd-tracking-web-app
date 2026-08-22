@@ -53,6 +53,96 @@
   --gantt-row-height:       48px;
 }
 
+:root {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+  }
+}
+
+/* ─── Dark mode ────────────────────────────────────────────────────────────────
+   Tailwind v4 utilities (bg-card, text-text-primary, ...) resolve to var(--color-*)
+   at runtime, so redefining the same custom-property names here re-themes the
+   whole app with no per-component changes. --color-primary (navbar) is
+   intentionally unchanged — it's already dark in both modes.
+   Two blocks: prefers-color-scheme picks up the OS setting automatically,
+   guarded off when the user explicitly chose light; the [data-theme="dark"]
+   block is the explicit override set by the theme toggle. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-surface:        #0F131C;
+    --color-card:           #1A1F2B;
+    --color-text-primary:   #E8EAF0;
+    --color-text-muted:     #94A3B8;
+
+    --color-rag-green-light:  #113328;
+    --color-rag-green-text:   #6EE7B7;
+    --color-rag-amber-light:  #3A2A0E;
+    --color-rag-amber-text:   #FCD34D;
+    --color-rag-red-light:    #3A1518;
+    --color-rag-red-text:     #FCA5A5;
+
+    --color-accent:           #818CF8;
+    --color-accent-light:     #262A4A;
+
+    --color-overload:         #FB923C;
+    --color-overload-light:   #3A2413;
+
+    --color-border:           #2A3040;
+    --color-border-muted:     #232838;
+
+    --color-gray-50:          #111827;
+    --color-gray-100:         #1F2937;
+    --color-gray-200:         #374151;
+    --color-gray-300:         #4B5563;
+    --color-gray-400:         #6B7280;
+    --color-gray-500:         #9CA3AF;
+    --color-gray-600:         #D1D5DB;
+    --color-gray-700:         #E5E7EB;
+    --color-gray-800:         #F3F4F6;
+    --color-gray-900:         #F9FAFB;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-surface:        #0F131C;
+  --color-card:           #1A1F2B;
+  --color-text-primary:   #E8EAF0;
+  --color-text-muted:     #94A3B8;
+
+  --color-rag-green-light:  #113328;
+  --color-rag-green-text:   #6EE7B7;
+  --color-rag-amber-light:  #3A2A0E;
+  --color-rag-amber-text:   #FCD34D;
+  --color-rag-red-light:    #3A1518;
+  --color-rag-red-text:     #FCA5A5;
+
+  --color-accent:           #818CF8;
+  --color-accent-light:     #262A4A;
+
+  --color-overload:         #FB923C;
+  --color-overload-light:   #3A2413;
+
+  --color-border:           #2A3040;
+  --color-border-muted:     #232838;
+
+  --color-gray-50:          #111827;
+  --color-gray-100:         #1F2937;
+  --color-gray-200:         #374151;
+  --color-gray-300:         #4B5563;
+  --color-gray-400:         #6B7280;
+  --color-gray-500:         #9CA3AF;
+  --color-gray-600:         #D1D5DB;
+  --color-gray-700:         #E5E7EB;
+  --color-gray-800:         #F3F4F6;
+  --color-gray-900:         #F9FAFB;
+}
+
 /* ─── Base ─────────────────────────────────────────────────────────────────── */
 html,
 body {

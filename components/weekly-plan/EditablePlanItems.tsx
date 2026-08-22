@@ -29,7 +29,7 @@ const TYPE_STYLE: Record<string, { bg: string; color: string; label: string }> =
 }
 
 const inputCls = "w-full px-2.5 py-1.5 text-sm rounded-lg border outline-none focus:ring-2"
-const inputStyle = { borderColor: "var(--color-border)", background: "white", color: "var(--color-text-primary)" }
+const inputStyle = { borderColor: "var(--color-border)", background: "var(--color-card)", color: "var(--color-text-primary)" }
 
 interface EditablePlanItemsProps {
   items: PlanItem[]
@@ -50,7 +50,7 @@ function StatusButtons({ status, onChange }: { status: PlanItemStatus; onChange:
         className={btnCls(status === "pending")}
         style={{
           borderColor: "var(--color-border)",
-          background: status === "pending" ? "var(--color-surface)" : "white",
+          background: status === "pending" ? "var(--color-surface)" : "var(--color-card)",
           color: "var(--color-text-muted)",
         }}
         title="Pending"
@@ -62,7 +62,7 @@ function StatusButtons({ status, onChange }: { status: PlanItemStatus; onChange:
         className={btnCls(status === "done")}
         style={{
           borderColor: status === "done" ? "var(--color-rag-green)" : "var(--color-border)",
-          background: status === "done" ? "var(--color-rag-green-light)" : "white",
+          background: status === "done" ? "var(--color-rag-green-light)" : "var(--color-card)",
           color: status === "done" ? "var(--color-rag-green-text)" : "var(--color-text-muted)",
         }}
         title="Mark done"
@@ -74,7 +74,7 @@ function StatusButtons({ status, onChange }: { status: PlanItemStatus; onChange:
         className={btnCls(status === "carried_over")}
         style={{
           borderColor: status === "carried_over" ? "var(--color-rag-amber)" : "var(--color-border)",
-          background: status === "carried_over" ? "var(--color-rag-amber-light)" : "white",
+          background: status === "carried_over" ? "var(--color-rag-amber-light)" : "var(--color-card)",
           color: status === "carried_over" ? "var(--color-rag-amber-text)" : "var(--color-text-muted)",
         }}
         title="ไม่เสร็จ — carry ไป week หน้า"
@@ -134,7 +134,7 @@ function ItemRow({ item, onUpdate, onDelete }: { item: PlanItem; onUpdate: Edita
               <p className={`text-sm font-medium ${item.status === "done" ? "line-through" : ""}`} style={{ color: "var(--color-text-primary)" }}>{item.title}</p>
               {item.subtitle && <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>{item.subtitle}</p>}
               {item.note && (
-                <p className="text-xs mt-1.5 px-2 py-1.5 rounded" style={{ background: "white", color: "var(--color-text-primary)", borderLeft: "3px solid var(--color-accent)", whiteSpace: "pre-wrap" }}>
+                <p className="text-xs mt-1.5 px-2 py-1.5 rounded" style={{ background: "var(--color-card)", color: "var(--color-text-primary)", borderLeft: "3px solid var(--color-accent)", whiteSpace: "pre-wrap" }}>
                   📝 {item.note}
                 </p>
               )}
