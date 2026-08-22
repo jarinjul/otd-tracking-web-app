@@ -350,20 +350,23 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
 
         <div className="bg-card border border-border rounded-card p-4">
           <p className="text-sm font-semibold text-text-primary mb-3">Project release progress (all projects)</p>
-          <div className="flex flex-col gap-1.5 text-xs">
-            {PROGRESS_BUCKETS.map((b) => {
-              const count = progressCounts.counts[b.key]
-              const pct = progressCounts.total > 0 ? Math.round((count / progressCounts.total) * 100) : 0
-              return (
-                <div key={b.key} className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-text-secondary">
-                    <span className="w-2 h-2 rounded-full inline-block" style={{ background: b.color }} />
-                    {b.label}
-                  </span>
-                  <span className="font-medium text-text-primary">{count} ({pct}%)</span>
-                </div>
-              )
-            })}
+          <div className="flex items-center gap-4">
+            <ProgressDonut counts={progressCounts.counts} total={progressCounts.total} />
+            <div className="flex flex-col gap-1.5 text-xs flex-1">
+              {PROGRESS_BUCKETS.map((b) => {
+                const count = progressCounts.counts[b.key]
+                const pct = progressCounts.total > 0 ? Math.round((count / progressCounts.total) * 100) : 0
+                return (
+                  <div key={b.key} className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-text-secondary">
+                      <span className="w-2 h-2 rounded-full inline-block" style={{ background: b.color }} />
+                      {b.label}
+                    </span>
+                    <span className="font-medium text-text-primary">{count} ({pct}%)</span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
           <div className="border-t border-border mt-3 pt-3">
@@ -430,6 +433,47 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
 }
 
 // Renders the trend as a full-width HTML+SVG hybrid rather than a single scaled <svg>: a fixed
+// Standard percentage-donut trick: a circle with r=15.9155 has circumference ≈100, so each
+// segment's stroke-dasharray can use raw percentage values directly with no extra math, and
+// dashoffset just walks backward from 25 (12 o'clock) by each prior segment's share in turn.
+function ProgressDonut({ counts, total }: { counts: Record<ProgressBucket, number>; total: number }) {
+  const R = 15.9155
+  let offset = 25
+  const segments = PROGRESS_BUCKETS.map((b) => {
+    const count = counts[b.key]
+    const pct = total > 0 ? (count / total) * 100 : 0
+    const seg = { ...b, pct, dashoffset: offset }
+    offset -= pct
+    return seg
+  }).filter((s) => s.pct > 0)
+
+  return (
+    <div className="relative shrink-0" style={{ width: 96, height: 96 }}>
+      <svg viewBox="0 0 36 36" width="96" height="96">
+        <circle cx="18" cy="18" r={R} fill="none" stroke="var(--color-surface)" strokeWidth="4" />
+        {segments.map((s) => (
+          <circle
+            key={s.key}
+            cx="18"
+            cy="18"
+            r={R}
+            fill="none"
+            stroke={s.color}
+            strokeWidth="4"
+            strokeDasharray={`${s.pct} ${100 - s.pct}`}
+            strokeDashoffset={s.dashoffset}
+            strokeLinecap={segments.length === 1 ? "butt" : "round"}
+          />
+        ))}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-xl font-bold text-text-primary">{total}</span>
+        <span className="text-[10px] text-text-muted">Releases</span>
+      </div>
+    </div>
+  )
+}
+
 // height with width:100% forces the browser to scale the viewBox to fit the SHORTER dimension
 // (the height), so the chart stays tiny and centered no matter how wide the card is. Splitting it
 // — an SVG stretched with preserveAspectRatio="none" for just the line/fill (harmless to distort;
