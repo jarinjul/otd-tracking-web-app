@@ -171,9 +171,10 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
       const active = pickActiveRelease(p.releases)
       const rag = worstRagStatus(p)
       const owner = p.teamMembers.find((m) => m.role === "ProjectManager")?.person ?? p.teamMembers[0]?.person ?? null
+      const po = p.teamMembers.find((m) => m.role === "ProductOwner")?.person ?? null
       const due = active?.endDate ? new Date(active.endDate) : null
       const overdue = !!(due && due < today && active?.status !== "deployed")
-      return { project: p, active, rag, owner, due, overdue }
+      return { project: p, active, rag, owner, po, due, overdue }
     })
     return rows.sort((a, b) => {
       const rank = (r: typeof a) => (r.due ? (r.overdue ? 0 : 1) : 2)
@@ -301,7 +302,8 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
             <thead>
               <tr className="text-left text-text-muted">
                 <th className="font-normal pb-2">Project</th>
-                <th className="font-normal pb-2 w-14">Owner</th>
+                <th className="font-normal pb-2 w-12">PM</th>
+                <th className="font-normal pb-2 w-12">PO</th>
                 <th className="font-normal pb-2 w-24">Health</th>
                 <th className="font-normal pb-2 w-28">Progress</th>
                 <th className="font-normal pb-2 w-20">Due date</th>
@@ -309,7 +311,7 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
               </tr>
             </thead>
             <tbody>
-              {visiblePortfolioRows.map(({ project, active, rag, owner, due, overdue }) => (
+              {visiblePortfolioRows.map(({ project, active, rag, owner, po, due, overdue }) => (
                 <tr
                   key={project.id}
                   className="border-t border-border cursor-pointer hover:bg-gray-50"
@@ -320,6 +322,13 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
                     {owner ? (
                       <span title={owner.name}>
                         <Avatar name={owner.name} avatarUrl={owner.avatarUrl} size="sm" />
+                      </span>
+                    ) : "—"}
+                  </td>
+                  <td className="py-2">
+                    {po ? (
+                      <span title={po.name}>
+                        <Avatar name={po.name} avatarUrl={po.avatarUrl} size="sm" />
                       </span>
                     ) : "—"}
                   </td>
