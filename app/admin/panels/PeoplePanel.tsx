@@ -3,9 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import type { ProjectRole } from "@/lib/types"
 import { Avatar } from "@/components/ui/Avatar"
-
-const AVATAR_MAX_CHARS = 150_000
-const AVATAR_SIZE_PX = 128
+import { cropSquareImage, AVATAR_MAX_CHARS } from "@/lib/utils/image"
 
 const ALL_ROLES: ProjectRole[] = [
   "ProjectManager",
@@ -122,37 +120,21 @@ export function PeoplePanel() {
     setForm((f) => ({ ...f, [key]: val }))
   }
 
-  // Crop to a centered square, downscale to AVATAR_SIZE_PX, and store as a JPEG data URI —
-  // small enough to live directly on Person.avatarUrl with no external file storage.
-  function handleAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ""
     if (!file) return
     setAvatarError(null)
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      const img = new Image()
-      img.onload = () => {
-        const canvas = document.createElement("canvas")
-        canvas.width = AVATAR_SIZE_PX
-        canvas.height = AVATAR_SIZE_PX
-        const ctx = canvas.getContext("2d")
-        if (!ctx) return
-        const side = Math.min(img.width, img.height)
-        const sx = (img.width - side) / 2
-        const sy = (img.height - side) / 2
-        ctx.drawImage(img, sx, sy, side, side, 0, 0, AVATAR_SIZE_PX, AVATAR_SIZE_PX)
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.8)
-        if (dataUrl.length > AVATAR_MAX_CHARS) {
-          setAvatarError("รูปใหญ่เกินไป กรุณาเลือกรูปอื่น")
-          return
-        }
-        setField("avatarUrl", dataUrl)
+    try {
+      const dataUrl = await cropSquareImage(file)
+      if (dataUrl.length > AVATAR_MAX_CHARS) {
+        setAvatarError("รูปใหญ่เกินไป กรุณาเลือกรูปอื่น")
+        return
       }
-      img.src = reader.result as string
+      setField("avatarUrl", dataUrl)
+    } catch {
+      setAvatarError("อ่านไฟล์รูปไม่สำเร็จ")
     }
-    reader.readAsDataURL(file)
   }
 
   function toggleRole(role: ProjectRole) {

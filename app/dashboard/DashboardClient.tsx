@@ -171,7 +171,8 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
       const active = pickActiveRelease(p.releases)
       const rag = worstRagStatus(p)
       const owner = p.teamMembers.find((m) => m.role === "ProjectManager")?.person ?? p.teamMembers[0]?.person ?? null
-      const po = p.teamMembers.find((m) => m.role === "ProductOwner")?.person ?? null
+      // PO is set directly on the project (business-side role), not looked up from the dev-team roster.
+      const po = (p as any).productOwnerName ? { name: (p as any).productOwnerName as string, avatarUrl: (p as any).productOwnerAvatar as string | null } : null
       const due = active?.endDate ? new Date(active.endDate) : null
       const overdue = !!(due && due < today && active?.status !== "deployed")
       return { project: p, active, rag, owner, po, due, overdue }

@@ -103,6 +103,11 @@ model Project {
   tags         String[] @default([])
   stakeholders String[] @default([])
 
+  // Product Owner is a business-side role, deliberately not tied to Person/ProjectMember (which
+  // is the internal dev-team roster). Free-text name + optional photo, set directly on the project.
+  productOwnerName   String?
+  productOwnerAvatar String? // data URI, same convention as Person.avatarUrl
+
   strategicBucket    String?
 
   prdUrl             String?

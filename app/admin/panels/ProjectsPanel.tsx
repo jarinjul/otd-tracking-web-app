@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react"
 import type { Project } from "@/lib/types"
+import { Avatar } from "@/components/ui/Avatar"
+import { cropSquareImage, AVATAR_MAX_CHARS } from "@/lib/utils/image"
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -39,6 +41,8 @@ const EMPTY_FORM = {
   prdUrl: "",
   designPrototypeUrl: "",
   prdContent: "",
+  productOwnerName: "",
+  productOwnerAvatar: "",
 }
 
 type FormState = typeof EMPTY_FORM
@@ -89,6 +93,7 @@ export function ProjectsPanel() {
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [bucketInfoOpen, setBucketInfoOpen] = useState(false)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -113,6 +118,7 @@ export function ProjectsPanel() {
   function openCreate() {
     setEditId(null)
     setForm(EMPTY_FORM)
+    setAvatarError(null)
     setDrawerOpen(true)
   }
 
@@ -129,7 +135,10 @@ export function ProjectsPanel() {
       prdUrl: p.prdUrl ?? "",
       designPrototypeUrl: p.designPrototypeUrl ?? "",
       prdContent: p.prdContent ?? "",
+      productOwnerName: (p as any).productOwnerName ?? "",
+      productOwnerAvatar: (p as any).productOwnerAvatar ?? "",
     })
+    setAvatarError(null)
     setDrawerOpen(true)
   }
 
@@ -149,6 +158,25 @@ export function ProjectsPanel() {
       prdUrl: form.prdUrl || null,
       designPrototypeUrl: form.designPrototypeUrl || null,
       prdContent: form.prdContent,
+      productOwnerName: form.productOwnerName || null,
+      productOwnerAvatar: form.productOwnerAvatar || null,
+    }
+  }
+
+  async function handleAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+    setAvatarError(null)
+    try {
+      const dataUrl = await cropSquareImage(file)
+      if (dataUrl.length > AVATAR_MAX_CHARS) {
+        setAvatarError("รูปใหญ่เกินไป กรุณาเลือกรูปอื่น")
+        return
+      }
+      setField("productOwnerAvatar", dataUrl)
+    } catch {
+      setAvatarError("อ่านไฟล์รูปไม่สำเร็จ")
     }
   }
 
@@ -463,6 +491,48 @@ export function ProjectsPanel() {
                   placeholder="e.g. CEO, VP Product"
                 />
               </Field>
+
+              {/* ── Section: Product Owner ── */}
+              <p className="text-xs font-bold uppercase tracking-wider mt-2" style={{ color: "var(--color-text-muted)" }}>
+                Product Owner
+              </p>
+              <p className="text-xs -mt-3" style={{ color: "var(--color-text-muted)" }}>
+                ฝั่งธุรกิจ ไม่ผูกกับรายชื่อใน Admin People (ทีม dev เท่านั้น) — กรอกชื่อและรูปตรงนี้ได้เลย
+              </p>
+
+              <Field label="Product Owner Name">
+                <input
+                  className={inputCls}
+                  style={inputStyle}
+                  value={form.productOwnerName}
+                  onChange={(e) => setField("productOwnerName", e.target.value)}
+                  placeholder="e.g. Somchai Sae-Lee"
+                />
+              </Field>
+
+              <Field label="Product Owner Photo">
+                <input type="file" accept="image/*" onChange={handleAvatarFile} className="text-sm" />
+                {avatarError && (
+                  <p className="text-xs mt-1" style={{ color: "var(--color-rag-red)" }}>{avatarError}</p>
+                )}
+              </Field>
+
+              {form.productOwnerName && (
+                <div className="flex items-center gap-3 p-3 rounded-lg" style={{ background: "var(--color-surface)" }}>
+                  <Avatar name={form.productOwnerName} avatarUrl={form.productOwnerAvatar} size="lg" />
+                  <p className="text-sm font-semibold flex-1" style={{ color: "var(--color-text-primary)" }}>{form.productOwnerName}</p>
+                  {form.productOwnerAvatar && (
+                    <button
+                      type="button"
+                      onClick={() => { setField("productOwnerAvatar", ""); setAvatarError(null) }}
+                      className="text-xs px-2 py-1 rounded-lg border font-medium shrink-0"
+                      style={{ borderColor: "var(--color-border)", color: "var(--color-rag-red)" }}
+                    >
+                      ลบรูป
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* ── Section: Links & PRD ── */}
               <p className="text-xs font-bold uppercase tracking-wider mt-2" style={{ color: "var(--color-text-muted)" }}>
