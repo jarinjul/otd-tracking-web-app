@@ -2,6 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react"
 import type { ProjectRole } from "@/lib/types"
+import { Avatar } from "@/components/ui/Avatar"
+
+const AVATAR_MAX_CHARS = 150_000
+const AVATAR_SIZE_PX = 128
 
 const ALL_ROLES: ProjectRole[] = [
   "ProjectManager",
@@ -64,14 +68,6 @@ function Field({ label, helper, children }: { label: string; helper?: string; ch
 const inputCls = "w-full px-3 py-2 text-sm rounded-lg border outline-none focus:ring-2"
 const inputStyle = { borderColor: "var(--color-border)", background: "white", color: "var(--color-text-primary)" }
 
-const AVATAR_COLORS = ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#14B8A6"]
-function avatarColor(name: string) {
-  return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]
-}
-function initials(name: string) {
-  return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
-}
-
 export function PeoplePanel() {
   const [people, setPeople] = useState<PersonRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -81,6 +77,7 @@ export function PeoplePanel() {
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -104,6 +101,7 @@ export function PeoplePanel() {
   function openCreate() {
     setEditId(null)
     setForm(EMPTY_FORM)
+    setAvatarError(null)
     setDrawerOpen(true)
   }
 
@@ -116,11 +114,45 @@ export function PeoplePanel() {
       avatarUrl: p.avatarUrl ?? "",
       roles: p.roles ?? [],
     })
+    setAvatarError(null)
     setDrawerOpen(true)
   }
 
   function setField<K extends keyof FormState>(key: K, val: FormState[K]) {
     setForm((f) => ({ ...f, [key]: val }))
+  }
+
+  // Crop to a centered square, downscale to AVATAR_SIZE_PX, and store as a JPEG data URI —
+  // small enough to live directly on Person.avatarUrl with no external file storage.
+  function handleAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+    setAvatarError(null)
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement("canvas")
+        canvas.width = AVATAR_SIZE_PX
+        canvas.height = AVATAR_SIZE_PX
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return
+        const side = Math.min(img.width, img.height)
+        const sx = (img.width - side) / 2
+        const sy = (img.height - side) / 2
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, AVATAR_SIZE_PX, AVATAR_SIZE_PX)
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.8)
+        if (dataUrl.length > AVATAR_MAX_CHARS) {
+          setAvatarError("รูปใหญ่เกินไป กรุณาเลือกรูปอื่น")
+          return
+        }
+        setField("avatarUrl", dataUrl)
+      }
+      img.src = reader.result as string
+    }
+    reader.readAsDataURL(file)
   }
 
   function toggleRole(role: ProjectRole) {
@@ -228,16 +260,7 @@ export function PeoplePanel() {
               {people.map((p, i) => (
                 <tr key={p.id} style={{ borderTop: i > 0 ? "1px solid var(--color-border)" : undefined }}>
                   <td className="px-4 py-3 w-10">
-                    {p.avatarUrl ? (
-                      <img src={p.avatarUrl} alt={p.name} className="w-8 h-8 rounded-full object-cover" />
-                    ) : (
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                        style={{ background: avatarColor(p.name) }}
-                      >
-                        {initials(p.name)}
-                      </div>
-                    )}
+                    <Avatar name={p.name} avatarUrl={p.avatarUrl} size="md" />
                   </td>
                   <td className="px-4 py-3 font-medium" style={{ color: "var(--color-text-primary)" }}>{p.name}</td>
                   <td className="px-4 py-3 text-xs" style={{ color: "var(--color-text-muted)" }}>{p.email ?? "—"}</td>
@@ -336,7 +359,7 @@ export function PeoplePanel() {
                 />
               </Field>
 
-              <Field label="Avatar URL">
+              <Field label="Avatar URL" helper="วางลิงก์รูปโดยตรง หรืออัปโหลดไฟล์ด้านล่างแทนก็ได้">
                 <input
                   type="url"
                   className={inputCls}
@@ -345,6 +368,13 @@ export function PeoplePanel() {
                   onChange={(e) => setField("avatarUrl", e.target.value)}
                   placeholder="https://…"
                 />
+              </Field>
+
+              <Field label="อัปโหลดรูปโปรไฟล์">
+                <input type="file" accept="image/*" onChange={handleAvatarFile} className="text-sm" />
+                {avatarError && (
+                  <p className="text-xs mt-1" style={{ color: "var(--color-rag-red)" }}>{avatarError}</p>
+                )}
               </Field>
 
               {/* ── Roles multi-select ── */}
@@ -389,23 +419,24 @@ export function PeoplePanel() {
               {/* Avatar preview */}
               {form.name && (
                 <div className="flex items-center gap-3 p-3 rounded-lg" style={{ background: "var(--color-surface)" }}>
-                  {form.avatarUrl ? (
-                    <img src={form.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
-                  ) : (
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                      style={{ background: avatarColor(form.name) }}
-                    >
-                      {initials(form.name)}
-                    </div>
-                  )}
-                  <div>
+                  <Avatar name={form.name} avatarUrl={form.avatarUrl} size="lg" />
+                  <div className="flex-1">
                     <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>{form.name}</p>
                     <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                       {form.department || "No department"}
                       {(form.roles ?? []).length > 0 && ` · ${(form.roles ?? []).map(r => ROLE_LABELS[r]).join(", ")}`}
                     </p>
                   </div>
+                  {form.avatarUrl && (
+                    <button
+                      type="button"
+                      onClick={() => { setField("avatarUrl", ""); setAvatarError(null) }}
+                      className="text-xs px-2 py-1 rounded-lg border font-medium shrink-0"
+                      style={{ borderColor: "var(--color-border)", color: "var(--color-rag-red)" }}
+                    >
+                      ลบรูป
+                    </button>
+                  )}
                 </div>
               )}
 
