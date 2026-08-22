@@ -429,33 +429,79 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
   )
 }
 
+// Renders the trend as a full-width HTML+SVG hybrid rather than a single scaled <svg>: a fixed
+// height with width:100% forces the browser to scale the viewBox to fit the SHORTER dimension
+// (the height), so the chart stays tiny and centered no matter how wide the card is. Splitting it
+// — an SVG stretched with preserveAspectRatio="none" for just the line/fill (harmless to distort;
+// it's a trend line) and plain positioned HTML for the dots and text (which would look visibly
+// stretched if they lived inside that same distorted SVG) — is what actually fills the card.
 function CompletionTrendChart({ points }: { points: { key: string; monthIndex0: number; rate: number }[] }) {
-  const W = 230, H = 74
-  const PAD_L = 10, PAD_R = 10
-  const PLOT_TOP = 14, PLOT_BOTTOM = 55
-  const xAt = (i: number) => PAD_L + (i * (W - PAD_L - PAD_R)) / (points.length - 1)
-  const yAt = (rate: number) => PLOT_BOTTOM - (rate / 100) * (PLOT_BOTTOM - PLOT_TOP)
-  const coords = points.map((p, i) => ({ x: xAt(i), y: yAt(p.rate), ...p }))
-  const polyline = coords.map((c) => `${c.x},${c.y}`).join(" ")
-  const labelIdx = new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])
+  const Y_TOP = 12, Y_BOTTOM = 88 // percent of plot-area height
+
+  const coords = points.map((p, i) => ({
+    ...p,
+    xPct: points.length > 1 ? (i / (points.length - 1)) * 100 : 50,
+    yPct: Y_BOTTOM - (p.rate / 100) * (Y_BOTTOM - Y_TOP),
+  }))
+  const linePoints = coords.map((c) => `${c.xPct},${c.yPct}`).join(" ")
+  const areaPoints = `0,100 ${linePoints} 100,100`
+  const lastIdx = coords.length - 1
 
   return (
-    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} role="img" className="mt-1">
-      <title>Completion rate trend, last 6 months</title>
-      <polyline points={polyline} fill="none" stroke="var(--color-rag-green)" strokeWidth="2" />
-      {coords.map((c, i) => (
-        <circle key={c.key} cx={c.x} cy={c.y} r={i === coords.length - 1 ? 3.5 : 2.5} fill="var(--color-rag-green)" />
-      ))}
-      {coords.map((c, i) => labelIdx.has(i) && (
-        <text key={`label-${c.key}`} x={c.x} y={c.y - 8} fontSize="8" fill="var(--color-rag-green-text)" textAnchor="middle" fontWeight={i === coords.length - 1 ? 600 : 400}>
-          {c.rate}%
-        </text>
-      ))}
-      {coords.map((c) => (
-        <text key={`month-${c.key}`} x={c.x} y={H - 4} fontSize="8" fill="var(--color-text-muted)" textAnchor="middle">
-          {MONTH_NAMES[c.monthIndex0]}
-        </text>
-      ))}
-    </svg>
+    <div className="mt-3">
+      <div className="relative w-full" style={{ height: 120 }}>
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          className="absolute inset-0"
+          role="img"
+        >
+          <title>Completion rate trend, last 6 months</title>
+          <polygon points={areaPoints} fill="var(--color-rag-green-light)" opacity={0.6} />
+          <polyline
+            points={linePoints}
+            fill="none"
+            stroke="var(--color-rag-green)"
+            strokeWidth={1.5}
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+        {coords.map((c, i) => (
+          <div key={c.key} className="absolute" style={{ left: `${c.xPct}%`, top: `${c.yPct}%`, transform: "translate(-50%, -50%)" }}>
+            <span
+              className="absolute whitespace-nowrap text-xs"
+              style={{
+                bottom: "100%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                marginBottom: 6,
+                color: "var(--color-rag-green-text)",
+                fontWeight: i === lastIdx ? 600 : 500,
+              }}
+            >
+              {c.rate}%
+            </span>
+            <div
+              className="rounded-full"
+              style={{
+                width: i === lastIdx ? 10 : 7,
+                height: i === lastIdx ? 10 : 7,
+                background: "var(--color-rag-green)",
+                border: "2px solid var(--color-card)",
+              }}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-between mt-1">
+        {coords.map((c) => (
+          <span key={`month-${c.key}`} className="text-xs text-text-muted">
+            {MONTH_NAMES[c.monthIndex0]}
+          </span>
+        ))}
+      </div>
+    </div>
   )
 }
