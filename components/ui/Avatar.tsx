@@ -6,9 +6,9 @@ interface AvatarProps {
 }
 
 const SIZE = {
-  sm: "w-6 h-6 text-xs",
-  md: "w-8 h-8 text-sm",
-  lg: "w-10 h-10 text-base",
+  sm: "w-6 h-6 min-w-6 min-h-6 text-xs shrink-0",
+  md: "w-8 h-8 min-w-8 min-h-8 text-sm shrink-0",
+  lg: "w-10 h-10 min-w-10 min-h-10 text-base shrink-0",
 }
 
 function initials(name: string): string {
