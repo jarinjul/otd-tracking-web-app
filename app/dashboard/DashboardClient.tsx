@@ -79,6 +79,9 @@ const PORTFOLIO_BOARDS: { key: PortfolioBoard; label: string; color: string }[] 
   { key: "not_started", label: "ยังไม่เริ่ม", color: "var(--color-gray-400)" },
   { key: "done", label: "เสร็จสิ้น", color: "var(--color-rag-green)" },
 ]
+const PORTFOLIO_BOARD_ROWS_VISIBLE = 4
+const PORTFOLIO_ROW_HEIGHT = 40
+const PORTFOLIO_HEADER_HEIGHT = 28
 function portfolioBoardOf(active: { status: string } | null | undefined): PortfolioBoard {
   if (!active) return "not_started"
   if (active.status === "deployed") return "done"
@@ -318,41 +321,77 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
       <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-3 mb-4">
         <div className="bg-card border border-border rounded-card p-4">
           <p className="text-sm font-semibold text-text-primary mb-3">Project portfolio</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="flex flex-col gap-3">
             {PORTFOLIO_BOARDS.map((board) => {
               const rows = portfolioBoards[board.key]
               return (
-                <div key={board.key} className="rounded-lg border border-border flex flex-col min-h-0" style={{ background: "var(--color-surface)" }}>
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
+                <div key={board.key} className="rounded-lg border border-border" style={{ background: "var(--color-surface)" }}>
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-border">
                     <span className="flex items-center gap-1.5 text-xs font-semibold text-text-primary">
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ background: board.color }} />
                       {board.label}
                     </span>
                     <span className="text-xs font-medium text-text-muted">{rows.length}</span>
                   </div>
-                  <div className="flex flex-col overflow-y-auto" style={{ maxHeight: 280 }}>
-                    {rows.length === 0 ? (
-                      <p className="text-xs text-text-muted px-3 py-4 text-center">ไม่มีโปรเจกต์</p>
-                    ) : (
-                      rows.map(({ project, rag, owner, due, overdue }) => (
-                        <div
-                          key={project.id}
-                          className="flex items-center gap-2 px-3 py-2 border-b border-border last:border-0 cursor-pointer hover:bg-card"
-                          onClick={() => setOpenProjectId(project.id)}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: RAG_BAR_COLOR[rag] }} />
-                          <span className="flex-1 min-w-0 truncate text-xs text-text-primary" title={project.name}>{project.name}</span>
-                          {owner && <Avatar name={owner.name} avatarUrl={owner.avatarUrl} size="sm" className="shrink-0" />}
-                          <span
-                            className="text-[10px] shrink-0"
-                            style={{ color: overdue ? "var(--color-rag-red)" : "var(--color-text-muted)" }}
-                          >
-                            {due ? formatDateShort(due) : "—"}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
+                  {rows.length === 0 ? (
+                    <p className="text-xs text-text-muted px-3 py-4 text-center">ไม่มีโปรเจกต์</p>
+                  ) : (
+                    <div className="overflow-y-auto" style={{ maxHeight: PORTFOLIO_BOARD_ROWS_VISIBLE * PORTFOLIO_ROW_HEIGHT + PORTFOLIO_HEADER_HEIGHT }}>
+                      <table className="w-full text-xs" style={{ tableLayout: "fixed" }}>
+                        <thead className="sticky top-0" style={{ background: "var(--color-surface)" }}>
+                          <tr className="text-left text-text-muted">
+                            <th className="font-normal px-3" style={{ height: PORTFOLIO_HEADER_HEIGHT }}>Project</th>
+                            <th className="font-normal px-1 w-12">PM</th>
+                            <th className="font-normal px-1 w-12">PO</th>
+                            <th className="font-normal px-1 w-24">Health</th>
+                            <th className="font-normal px-1 w-28">Progress</th>
+                            <th className="font-normal px-1 w-20">Due date</th>
+                            <th className="font-normal px-1 pr-3 w-24">Release</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map(({ project, active, rag, owner, po, due, overdue }) => (
+                            <tr
+                              key={project.id}
+                              className="border-t border-border cursor-pointer hover:bg-card"
+                              style={{ height: PORTFOLIO_ROW_HEIGHT }}
+                              onClick={() => setOpenProjectId(project.id)}
+                            >
+                              <td className="px-3 text-text-primary truncate max-w-0">{project.name}</td>
+                              <td className="px-1">
+                                {owner ? (
+                                  <span title={owner.name}>
+                                    <Avatar name={owner.name} avatarUrl={owner.avatarUrl} size="sm" />
+                                  </span>
+                                ) : "—"}
+                              </td>
+                              <td className="px-1">
+                                {po ? (
+                                  <span title={po.name}>
+                                    <Avatar name={po.name} avatarUrl={po.avatarUrl} size="sm" />
+                                  </span>
+                                ) : "—"}
+                              </td>
+                              <td className="px-1">
+                                <span className="px-2 py-0.5 rounded-badge" style={{ background: RAG_BADGE[rag].bg, color: RAG_BADGE[rag].text }}>
+                                  {RAG_BADGE[rag].label}
+                                </span>
+                              </td>
+                              <td className="px-1">
+                                <div className="bg-card rounded-full h-1.5">
+                                  <div className="h-1.5 rounded-full" style={{ width: `${active?.progressPercent ?? 0}%`, background: RAG_BAR_COLOR[rag] }} />
+                                </div>
+                              </td>
+                              <td className="px-1" style={overdue ? { color: "var(--color-rag-red)" } : { color: "var(--color-text-muted)" }}>
+                                {due ? formatDateShort(due) : "—"}
+                              </td>
+                              <td className="px-1 pr-3 text-text-muted">{active?.version ?? "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )
             })}
