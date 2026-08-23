@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown } from "lucide-react"
+import { ChevronLeft, ChevronRight, ChevronDown, TrendingUp, TrendingDown } from "lucide-react"
 import { Avatar } from "@/components/ui/Avatar"
 import { ProjectDetailPanel } from "@/components/project/ProjectDetailPanel"
 import { worstRagStatus, RAG_RANK } from "@/lib/utils/rag"
@@ -117,6 +117,11 @@ function KpiCard({ label, value, valueColor, subtitle }: { label: string; value:
 export function DashboardClient({ projects, people, workloadEntries, interrupts }: DashboardClientProps) {
   const [selectedMonth, setSelectedMonth] = useState(() => monthKey(new Date()))
   const [openProjectId, setOpenProjectId] = useState<string | null>(null)
+  const [expandedBoards, setExpandedBoards] = useState<Record<PortfolioBoard, boolean>>({
+    in_progress: true,
+    not_started: false,
+    done: false,
+  })
   const [completionInfoOpen, setCompletionInfoOpen] = useState(false)
 
   const isCurrentMonth = selectedMonth === monthKey(new Date())
@@ -324,16 +329,23 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
           <div className="flex flex-col gap-3">
             {PORTFOLIO_BOARDS.map((board) => {
               const rows = portfolioBoards[board.key]
+              const expanded = expandedBoards[board.key]
               return (
                 <div key={board.key} className="rounded-lg border border-border" style={{ background: "var(--color-surface)" }}>
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedBoards((prev) => ({ ...prev, [board.key]: !prev[board.key] }))}
+                    className="w-full flex items-center justify-between px-3 py-2"
+                    style={expanded ? { borderBottom: "1px solid var(--color-border)" } : undefined}
+                  >
                     <span className="flex items-center gap-1.5 text-xs font-semibold text-text-primary">
+                      <ChevronDown size={13} className="text-text-muted shrink-0" style={{ transform: expanded ? undefined : "rotate(-90deg)", transition: "transform 0.15s" }} />
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ background: board.color }} />
                       {board.label}
                     </span>
                     <span className="text-xs font-medium text-text-muted">{rows.length}</span>
-                  </div>
-                  {rows.length === 0 ? (
+                  </button>
+                  {expanded && (rows.length === 0 ? (
                     <p className="text-xs text-text-muted px-3 py-4 text-center">ไม่มีโปรเจกต์</p>
                   ) : (
                     <div className="overflow-y-auto" style={{ maxHeight: PORTFOLIO_BOARD_ROWS_VISIBLE * PORTFOLIO_ROW_HEIGHT + PORTFOLIO_HEADER_HEIGHT }}>
@@ -391,7 +403,7 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
                         </tbody>
                       </table>
                     </div>
-                  )}
+                  ))}
                 </div>
               )
             })}
