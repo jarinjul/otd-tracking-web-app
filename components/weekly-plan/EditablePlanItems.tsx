@@ -316,7 +316,7 @@ export function EditablePlanItems({ items, onUpdate, onDelete, onAdd, onSync, sy
   const [addingOpen, setAddingOpen] = useState(false)
 
   return (
-    <div className="rounded-xl border h-full" style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}>
+    <div className="rounded-xl border" style={{ background: "var(--color-card)", borderColor: "var(--color-border)" }}>
       <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
         <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>This Week&apos;s Plan</span>
         <div className="flex items-center gap-2">
