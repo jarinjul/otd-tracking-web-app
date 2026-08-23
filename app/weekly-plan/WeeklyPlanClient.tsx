@@ -6,6 +6,7 @@ import { WeekNav } from "@/components/weekly-plan/WeekNav"
 import { WeekSummaryCards } from "@/components/weekly-plan/WeekSummaryCards"
 import { EditablePlanItems, type PlanItem, type PlanItemStatus } from "@/components/weekly-plan/EditablePlanItems"
 import { WeekRecap } from "@/components/weekly-plan/WeekRecap"
+import { MeetingNotes } from "@/components/weekly-plan/MeetingNotes"
 import { PersonFocusCard, type PersonFocus, type FocusTask } from "@/components/weekly-plan/PersonFocusCard"
 import { ProjectHealthTable, type ProjectHealthRow } from "@/components/weekly-plan/ProjectHealthTable"
 
@@ -88,6 +89,8 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [weekPlanId, setWeekPlanId] = useState<string | null>(null)
+  const [kickoffNotes, setKickoffNotes] = useState<string | null>(null)
+  const [wrapupNotes, setWrapupNotes] = useState<string | null>(null)
 
   const loadPlan = useCallback(async (weekDate: Date) => {
     setLoading(true)
@@ -96,6 +99,8 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
       const plan = await res.json()
       setWeekPlanId(plan.id)
       setItems(plan.items ?? [])
+      setKickoffNotes(plan.kickoffNotes ?? null)
+      setWrapupNotes(plan.wrapupNotes ?? null)
     } catch {
       setItems([])
     } finally {
@@ -324,6 +329,15 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
               items={items}
               interruptHours={weekInterruptHours}
               onCarry={handleCarryToNextWeek}
+            />
+          )}
+
+          {!loading && weekPlanId && (
+            <MeetingNotes
+              key={weekPlanId}
+              weekPlanId={weekPlanId}
+              initialKickoffNotes={kickoffNotes}
+              initialWrapupNotes={wrapupNotes}
             />
           )}
 

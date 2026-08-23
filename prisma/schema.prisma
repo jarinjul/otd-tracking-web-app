@@ -284,10 +284,12 @@ enum PlanItemStatus {
 }
 
 model WeekPlan {
-  id        String         @id @default(cuid())
-  weekStart DateTime       @unique // normalized to Monday 00:00 of that week
-  items     WeekPlanItem[]
-  createdAt DateTime       @default(now())
+  id           String         @id @default(cuid())
+  weekStart    DateTime       @unique // normalized to Monday 00:00 of that week
+  items        WeekPlanItem[]
+  kickoffNotes String? // Monday kickoff meeting notes
+  wrapupNotes  String? // Friday wrap-up meeting notes
+  createdAt    DateTime       @default(now())
 }
 
 model WeekPlanItem {
