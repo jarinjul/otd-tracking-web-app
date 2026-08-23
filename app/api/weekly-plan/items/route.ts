@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
       status: "pending",
       sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
     },
+    include: { checklist: true },
   })
   return Response.json(item, { status: 201 })
 }

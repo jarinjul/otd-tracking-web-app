@@ -307,8 +307,21 @@ model WeekPlanItem {
   sortOrder  Int            @default(0)
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
+  checklist  WeekPlanChecklistItem[]
 
   @@index([weekPlanId])
+}
+
+model WeekPlanChecklistItem {
+  id         String       @id @default(cuid())
+  planItem   WeekPlanItem @relation(fields: [planItemId], references: [id], onDelete: Cascade)
+  planItemId String
+  text       String
+  done       Boolean      @default(false)
+  sortOrder  Int          @default(0)
+  createdAt  DateTime     @default(now())
+
+  @@index([planItemId])
 }
 
 // Unplanned work logged against a person — replaces the paper log the team

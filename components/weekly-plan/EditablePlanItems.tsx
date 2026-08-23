@@ -5,6 +5,13 @@ import { Check, RotateCcw, Circle, Pencil, Trash2, Plus } from "lucide-react"
 
 export type PlanItemStatus = "pending" | "done" | "carried_over"
 
+export interface ChecklistItem {
+  id: string
+  text: string
+  done: boolean
+  sortOrder: number
+}
+
 export interface PlanItem {
   id: string
   source: "auto" | "manual"
@@ -16,6 +23,7 @@ export interface PlanItem {
   owner: string | null
   status: PlanItemStatus
   sortOrder: number
+  checklist: ChecklistItem[]
 }
 
 const TYPE_STYLE: Record<string, { bg: string; color: string; label: string }> = {
@@ -38,6 +46,9 @@ interface EditablePlanItemsProps {
   onAdd: (data: { title: string; subtitle: string; note: string; projectName: string; owner: string }) => void
   onSync: () => void
   syncing: boolean
+  onChecklistAdd: (planItemId: string, text: string) => void
+  onChecklistToggle: (planItemId: string, checklistId: string, done: boolean) => void
+  onChecklistDelete: (planItemId: string, checklistId: string) => void
 }
 
 function StatusButtons({ status, onChange }: { status: PlanItemStatus; onChange: (s: PlanItemStatus) => void }) {
@@ -85,7 +96,105 @@ function StatusButtons({ status, onChange }: { status: PlanItemStatus; onChange:
   )
 }
 
-function ItemRow({ item, onUpdate, onDelete }: { item: PlanItem; onUpdate: EditablePlanItemsProps["onUpdate"]; onDelete: (id: string) => void }) {
+function ChecklistSection({
+  planItemId,
+  checklist,
+  onToggle,
+  onDelete,
+  onAdd,
+}: {
+  planItemId: string
+  checklist: ChecklistItem[]
+  onToggle: (checklistId: string, done: boolean) => void
+  onDelete: (checklistId: string) => void
+  onAdd: (text: string) => void
+}) {
+  const [newText, setNewText] = useState("")
+  const done = checklist.filter((c) => c.done).length
+  const total = checklist.length
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0
+
+  function submitAdd() {
+    const trimmed = newText.trim()
+    if (trimmed) {
+      onAdd(trimmed)
+      setNewText("")
+    }
+  }
+
+  return (
+    <div className="mt-2.5">
+      {total > 0 && (
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className="flex-1 rounded-full h-1" style={{ background: "var(--color-surface)" }}>
+            <div className="h-1 rounded-full transition-all" style={{ width: `${pct}%`, background: "var(--color-accent)" }} />
+          </div>
+          <span className="text-[10px] font-medium shrink-0" style={{ color: "var(--color-text-muted)" }}>{done}/{total}</span>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1">
+        {checklist.map((c) => (
+          <div key={c.id} className="group flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={c.done}
+              onChange={(e) => onToggle(c.id, e.target.checked)}
+              className="shrink-0"
+              style={{ accentColor: "var(--color-accent)" }}
+            />
+            <span
+              className="flex-1 text-xs"
+              style={{
+                color: c.done ? "var(--color-text-muted)" : "var(--color-text-primary)",
+                textDecoration: c.done ? "line-through" : "none",
+              }}
+            >
+              {c.text}
+            </span>
+            <button
+              onClick={() => onDelete(c.id)}
+              className="opacity-0 group-hover:opacity-100 shrink-0 transition-opacity"
+              style={{ color: "var(--color-rag-red)" }}
+              title="ลบ to-do"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
+        ))}
+
+        <div className="flex items-center gap-2 mt-0.5">
+          <Plus size={12} style={{ color: "var(--color-text-muted)" }} className="shrink-0" />
+          <input
+            value={newText}
+            onChange={(e) => setNewText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") submitAdd() }}
+            onBlur={submitAdd}
+            placeholder="เพิ่ม to-do…"
+            className="flex-1 text-xs bg-transparent outline-none"
+            style={{ color: "var(--color-text-primary)" }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ItemRow({
+  item,
+  onUpdate,
+  onDelete,
+  onChecklistAdd,
+  onChecklistToggle,
+  onChecklistDelete,
+}: {
+  item: PlanItem
+  onUpdate: EditablePlanItemsProps["onUpdate"]
+  onDelete: (id: string) => void
+  onChecklistAdd: EditablePlanItemsProps["onChecklistAdd"]
+  onChecklistToggle: EditablePlanItemsProps["onChecklistToggle"]
+  onChecklistDelete: EditablePlanItemsProps["onChecklistDelete"]
+}) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(item.title)
   const [subtitle, setSubtitle] = useState(item.subtitle ?? "")
@@ -140,6 +249,14 @@ function ItemRow({ item, onUpdate, onDelete }: { item: PlanItem; onUpdate: Edita
               )}
             </>
           )}
+
+          <ChecklistSection
+            planItemId={item.id}
+            checklist={item.checklist}
+            onToggle={(checklistId, done) => onChecklistToggle(item.id, checklistId, done)}
+            onDelete={(checklistId) => onChecklistDelete(item.id, checklistId)}
+            onAdd={(text) => onChecklistAdd(item.id, text)}
+          />
         </div>
 
         {!editing && (
@@ -194,7 +311,7 @@ function AddItemForm({ onAdd, onCancel }: { onAdd: EditablePlanItemsProps["onAdd
   )
 }
 
-export function EditablePlanItems({ items, onUpdate, onDelete, onAdd, onSync, syncing }: EditablePlanItemsProps) {
+export function EditablePlanItems({ items, onUpdate, onDelete, onAdd, onSync, syncing, onChecklistAdd, onChecklistToggle, onChecklistDelete }: EditablePlanItemsProps) {
   const [addingOpen, setAddingOpen] = useState(false)
 
   return (
@@ -229,7 +346,15 @@ export function EditablePlanItems({ items, onUpdate, onDelete, onAdd, onSync, sy
           </div>
         ) : (
           items.map((item) => (
-            <ItemRow key={item.id} item={item} onUpdate={onUpdate} onDelete={onDelete} />
+            <ItemRow
+              key={item.id}
+              item={item}
+              onUpdate={onUpdate}
+              onDelete={onDelete}
+              onChecklistAdd={onChecklistAdd}
+              onChecklistToggle={onChecklistToggle}
+              onChecklistDelete={onChecklistDelete}
+            />
           ))
         )}
       </div>

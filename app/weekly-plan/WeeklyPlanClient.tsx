@@ -128,6 +128,38 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
     setItems((prev) => [...prev, created])
   }
 
+  async function handleChecklistAdd(planItemId: string, text: string) {
+    const res = await fetch("/api/weekly-plan/checklist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ planItemId, text }),
+    })
+    const created = await res.json()
+    setItems((prev) => prev.map((i) => (i.id === planItemId ? { ...i, checklist: [...i.checklist, created] } : i)))
+  }
+
+  function handleChecklistToggle(planItemId: string, checklistId: string, done: boolean) {
+    setItems((prev) => prev.map((i) => (
+      i.id === planItemId
+        ? { ...i, checklist: i.checklist.map((c) => (c.id === checklistId ? { ...c, done } : c)) }
+        : i
+    )))
+    fetch(`/api/weekly-plan/checklist/${checklistId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ done }),
+    })
+  }
+
+  function handleChecklistDelete(planItemId: string, checklistId: string) {
+    setItems((prev) => prev.map((i) => (
+      i.id === planItemId
+        ? { ...i, checklist: i.checklist.filter((c) => c.id !== checklistId) }
+        : i
+    )))
+    fetch(`/api/weekly-plan/checklist/${checklistId}`, { method: "DELETE" })
+  }
+
   async function handleSync() {
     setSyncing(true)
     try {
@@ -271,6 +303,9 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
               onAdd={handleAdd}
               onSync={handleSync}
               syncing={syncing}
+              onChecklistAdd={handleChecklistAdd}
+              onChecklistToggle={handleChecklistToggle}
+              onChecklistDelete={handleChecklistDelete}
             />
           )}
 

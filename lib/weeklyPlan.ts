@@ -137,14 +137,14 @@ export async function getOrCreateWeekPlan(weekParam: string) {
 
   let plan = await prisma.weekPlan.findUnique({
     where: { weekStart: normalized },
-    include: { items: { orderBy: { sortOrder: "asc" } } },
+    include: { items: { orderBy: { sortOrder: "asc" }, include: { checklist: { orderBy: { sortOrder: "asc" } } } } },
   })
 
   if (plan) return plan
 
   plan = await prisma.weekPlan.create({
     data: { weekStart: normalized },
-    include: { items: true },
+    include: { items: { include: { checklist: true } } },
   })
 
   const autoItems = await generateAutoItems(normalized)
@@ -189,7 +189,7 @@ export async function getOrCreateWeekPlan(weekParam: string) {
 
   return prisma.weekPlan.findUniqueOrThrow({
     where: { id: plan.id },
-    include: { items: { orderBy: { sortOrder: "asc" } } },
+    include: { items: { orderBy: { sortOrder: "asc" }, include: { checklist: { orderBy: { sortOrder: "asc" } } } } },
   })
 }
 
@@ -220,6 +220,6 @@ export async function syncAutoItems(weekParam: string) {
 
   return prisma.weekPlan.findUniqueOrThrow({
     where: { id: plan.id },
-    include: { items: { orderBy: { sortOrder: "asc" } } },
+    include: { items: { orderBy: { sortOrder: "asc" }, include: { checklist: { orderBy: { sortOrder: "asc" } } } } },
   })
 }
