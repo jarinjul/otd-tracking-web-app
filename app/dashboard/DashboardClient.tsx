@@ -8,7 +8,7 @@ import { worstRagStatus, RAG_RANK } from "@/lib/utils/rag"
 import { pickActiveRelease } from "@/lib/utils/release"
 import { costSavingsTotals } from "@/lib/utils/cost"
 import { TARGET_RATIO, monthKey, workloadStatus } from "@/lib/utils/workload"
-import { formatDateShort } from "@/lib/utils/date"
+import { formatDateShortYY } from "@/lib/utils/date"
 import type { ProjectWithRelations, ReleaseWithRelations, RagStatus } from "@/lib/types"
 
 type PersonOpt = { id: string; name: string; avatarUrl: string | null; monthlyCapacityHours: number }
@@ -390,12 +390,15 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
                                 </span>
                               </td>
                               <td className="px-1">
-                                <div className="bg-card rounded-full h-1.5">
-                                  <div className="h-1.5 rounded-full" style={{ width: `${active?.progressPercent ?? 0}%`, background: RAG_BAR_COLOR[rag] }} />
+                                <div className="flex items-center gap-1.5">
+                                  <div className="bg-card rounded-full h-1.5 flex-1">
+                                    <div className="h-1.5 rounded-full" style={{ width: `${active?.progressPercent ?? 0}%`, background: RAG_BAR_COLOR[rag] }} />
+                                  </div>
+                                  <span className="text-[10px] text-text-muted shrink-0">{active?.progressPercent ?? 0}%</span>
                                 </div>
                               </td>
                               <td className="px-1" style={overdue ? { color: "var(--color-rag-red)" } : { color: "var(--color-text-muted)" }}>
-                                {due ? formatDateShort(due) : "—"}
+                                {due ? formatDateShortYY(due) : "—"}
                               </td>
                               <td className="px-1 pr-3 text-text-muted">{active?.version ?? "—"}</td>
                             </tr>

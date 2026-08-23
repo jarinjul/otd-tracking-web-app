@@ -12,6 +12,11 @@ export function formatDateShort(date: Date | string): string {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })
 }
 
+export function formatDateShortYY(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })
+}
+
 export function countdownLabel(deadline: Date | string): string {
   const d = typeof deadline === "string" ? new Date(deadline) : deadline
   const today = new Date()
