@@ -102,6 +102,7 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
   const [selectedMonth, setSelectedMonth] = useState(() => monthKey(new Date()))
   const [showAllProjects, setShowAllProjects] = useState(false)
   const [openProjectId, setOpenProjectId] = useState<string | null>(null)
+  const [completionInfoOpen, setCompletionInfoOpen] = useState(false)
 
   const isCurrentMonth = selectedMonth === monthKey(new Date())
   const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d }, [])
@@ -380,7 +381,61 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
           </div>
 
           <div className="border-t border-border mt-3 pt-3">
-            <p className="text-xs text-text-muted">Completion rate</p>
+            <div className="flex items-center gap-1.5 relative">
+              <p className="text-xs text-text-muted">Completion rate</p>
+              <button
+                type="button"
+                onClick={() => setCompletionInfoOpen((o) => !o)}
+                className="w-3.5 h-3.5 rounded-full text-[10px] leading-none flex items-center justify-center border shrink-0"
+                style={{
+                  borderColor: completionInfoOpen ? "var(--color-accent)" : "var(--color-border)",
+                  color: completionInfoOpen ? "white" : "var(--color-accent)",
+                  background: completionInfoOpen ? "var(--color-accent)" : "transparent",
+                }}
+                title="Completion rate คำนวณจากอะไร?"
+              >
+                i
+              </button>
+
+              {completionInfoOpen && (
+                <div
+                  className="absolute z-10 top-full left-0 mt-1 rounded-xl border shadow-lg p-4 flex flex-col gap-2.5"
+                  style={{ width: 320, background: "var(--color-card)", borderColor: "var(--color-border)" }}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold" style={{ color: "var(--color-text-primary)" }}>
+                      Completion rate คำนวณยังไง?
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setCompletionInfoOpen(false)}
+                      className="text-sm leading-none"
+                      style={{ color: "var(--color-text-muted)" }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    นับเป็นราย <span className="font-semibold" style={{ color: "var(--color-text-primary)" }}>Release</span> (ไม่ใช่รายโปรเจกต์) โดยไม่รวม Release ที่ถูก <span className="font-semibold">rolled back</span>
+                  </p>
+                  <div className="rounded-lg px-3 py-2 flex flex-col gap-1" style={{ background: "var(--color-surface)" }}>
+                    <p className="text-xs" style={{ color: "var(--color-text-primary)" }}>
+                      <span className="font-semibold" style={{ color: "var(--color-rag-green-text)" }}>Release ที่ deploy สำเร็จแล้ว</span> ภายในเดือนนั้น
+                    </p>
+                    <p className="text-xs text-center" style={{ color: "var(--color-text-muted)" }}>÷</p>
+                    <p className="text-xs" style={{ color: "var(--color-text-primary)" }}>
+                      <span className="font-semibold" style={{ color: "var(--color-accent)" }}>Release ที่เริ่มไปแล้ว</span> ภายในเดือนนั้น (นับจากวันเริ่ม)
+                    </p>
+                  </div>
+                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    เช่น เดือนนี้มี Release ที่เริ่มไปแล้ว 10 ตัว deploy สำเร็จแล้ว 6 ตัว → Completion rate = 6 ÷ 10 = <span className="font-semibold" style={{ color: "var(--color-text-primary)" }}>60%</span>
+                  </p>
+                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    ตัวเลข % ข้างล่างกราฟ (เช่น "↗15.2% จากเดือนก่อน") คือส่วนต่างเทียบกับ Completion rate ของเดือนก่อนหน้า
+                  </p>
+                </div>
+              )}
+            </div>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold text-text-primary">{currentRate}%</span>
               <span
