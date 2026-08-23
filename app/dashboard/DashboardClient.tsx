@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown } from "lucide-react"
 import { Avatar } from "@/components/ui/Avatar"
 import { ProjectDetailPanel } from "@/components/project/ProjectDetailPanel"
-import { worstRagStatus } from "@/lib/utils/rag"
+import { worstRagStatus, RAG_RANK } from "@/lib/utils/rag"
 import { pickActiveRelease } from "@/lib/utils/release"
 import { costSavingsTotals } from "@/lib/utils/cost"
 import { TARGET_RATIO, monthKey, workloadStatus } from "@/lib/utils/workload"
@@ -179,10 +179,11 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
       return { project: p, active, rag, owner, po, due, overdue }
     })
     return rows.sort((a, b) => {
-      const rank = (r: typeof a) => (r.due ? (r.overdue ? 0 : 1) : 2)
-      const rd = rank(a) - rank(b)
-      if (rd !== 0) return rd
+      const ragRank = RAG_RANK[a.rag] - RAG_RANK[b.rag]
+      if (ragRank !== 0) return ragRank
       if (a.due && b.due) return a.due.getTime() - b.due.getTime()
+      if (a.due) return -1
+      if (b.due) return 1
       return 0
     })
   }, [projects, today])

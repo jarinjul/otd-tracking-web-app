@@ -1,6 +1,6 @@
 import type { ProjectWithRelations, RagStatus } from "@/lib/types"
 
-const RAG_RANK: Record<RagStatus, number> = { red: 0, amber: 1, green: 2 }
+export const RAG_RANK: Record<RagStatus, number> = { red: 0, amber: 1, green: 2 }
 
 /**
  * Worst (most severe) RAG status across all of this project's releases.
