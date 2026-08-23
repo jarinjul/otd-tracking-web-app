@@ -176,11 +176,11 @@ Body `{ weekPlanId, kickoffNotes?, wrapupNotes? }` — update เฉพาะ fi
 
 ## Acceptance criteria
 
-**F1 Checklist**
-- [ ] เพิ่ม/ติ๊ก/แก้/ลบ to-do ในแต่ละ task ได้ ตัวนับ + progress bar อัปเดตทันที (optimistic)
-- [ ] Refresh หน้าแล้ว checklist ยังอยู่ครบ ลำดับถูก
-- [ ] กด Sync Auto Items แล้ว checklist ที่มีอยู่ไม่หาย
-- [ ] ลบ task แล้ว checklist ของมันหายตาม (cascade)
+**F1 Checklist** — ✅ เสร็จแล้ว (commit `351a85d`)
+- [x] เพิ่ม/ติ๊ก/แก้/ลบ to-do ในแต่ละ task ได้ ตัวนับ + progress bar อัปเดตทันที (optimistic)
+- [x] Refresh หน้าแล้ว checklist ยังอยู่ครบ ลำดับถูก
+- [x] กด Sync Auto Items แล้ว checklist ที่มีอยู่ไม่หาย
+- [x] ลบ task แล้ว checklist ของมันหายตาม (cascade)
 
 **F2 Recap + Carry**
 - [ ] ตัวเลขสรุป เสร็จ X/Y (Z%) ตรงกับสถานะจริงของ items
