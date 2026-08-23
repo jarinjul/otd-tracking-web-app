@@ -73,6 +73,19 @@ const RAG_BAR_COLOR: Record<RagStatus, string> = {
   red: "var(--color-rag-red)",
 }
 
+type PortfolioBoard = "in_progress" | "not_started" | "done"
+const PORTFOLIO_BOARDS: { key: PortfolioBoard; label: string; color: string }[] = [
+  { key: "in_progress", label: "กำลังดำเนินการ", color: "var(--color-accent)" },
+  { key: "not_started", label: "ยังไม่เริ่ม", color: "var(--color-gray-400)" },
+  { key: "done", label: "เสร็จสิ้น", color: "var(--color-rag-green)" },
+]
+function portfolioBoardOf(active: { status: string } | null | undefined): PortfolioBoard {
+  if (!active) return "not_started"
+  if (active.status === "deployed") return "done"
+  if (active.status === "in_progress") return "in_progress"
+  return "not_started"
+}
+
 type ProgressBucket = "done" | "progress" | "review" | "notstarted"
 const PROGRESS_BUCKETS: { key: ProgressBucket; label: string; color: string }[] = [
   { key: "done", label: "เสร็จสิ้น", color: "var(--color-rag-green)" },
@@ -100,7 +113,6 @@ function KpiCard({ label, value, valueColor, subtitle }: { label: string; value:
 
 export function DashboardClient({ projects, people, workloadEntries, interrupts }: DashboardClientProps) {
   const [selectedMonth, setSelectedMonth] = useState(() => monthKey(new Date()))
-  const [showAllProjects, setShowAllProjects] = useState(false)
   const [openProjectId, setOpenProjectId] = useState<string | null>(null)
   const [completionInfoOpen, setCompletionInfoOpen] = useState(false)
 
@@ -188,7 +200,12 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
     })
   }, [projects, today])
 
-  const visiblePortfolioRows = showAllProjects ? portfolioRows : portfolioRows.slice(0, 8)
+  const portfolioBoards = useMemo(() => {
+    const boards: Record<PortfolioBoard, typeof portfolioRows> = { in_progress: [], not_started: [], done: [] }
+    for (const row of portfolioRows) boards[portfolioBoardOf(row.active)].push(row)
+    return boards
+  }, [portfolioRows])
+
   const openProject = projects.find((p) => p.id === openProjectId) ?? null
 
   // ── Release progress + completion rate ──
@@ -297,67 +314,49 @@ export function DashboardClient({ projects, people, workloadEntries, interrupts 
         </div>
       </div>
 
-      {/* Middle row: portfolio table + release progress */}
+      {/* Middle row: portfolio boards + release progress */}
       <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-3 mb-4">
         <div className="bg-card border border-border rounded-card p-4">
           <p className="text-sm font-semibold text-text-primary mb-3">Project portfolio</p>
-          <table className="w-full text-xs" style={{ tableLayout: "fixed" }}>
-            <thead>
-              <tr className="text-left text-text-muted">
-                <th className="font-normal pb-2">Project</th>
-                <th className="font-normal pb-2 w-12">PM</th>
-                <th className="font-normal pb-2 w-12">PO</th>
-                <th className="font-normal pb-2 w-24">Health</th>
-                <th className="font-normal pb-2 w-28">Progress</th>
-                <th className="font-normal pb-2 w-20">Due date</th>
-                <th className="font-normal pb-2 w-24">Release</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visiblePortfolioRows.map(({ project, active, rag, owner, po, due, overdue }) => (
-                <tr
-                  key={project.id}
-                  className="border-t border-border cursor-pointer hover:bg-gray-50"
-                  onClick={() => setOpenProjectId(project.id)}
-                >
-                  <td className="py-2 pr-2 text-text-primary truncate max-w-0">{project.name}</td>
-                  <td className="py-2">
-                    {owner ? (
-                      <span title={owner.name}>
-                        <Avatar name={owner.name} avatarUrl={owner.avatarUrl} size="sm" />
-                      </span>
-                    ) : "—"}
-                  </td>
-                  <td className="py-2">
-                    {po ? (
-                      <span title={po.name}>
-                        <Avatar name={po.name} avatarUrl={po.avatarUrl} size="sm" />
-                      </span>
-                    ) : "—"}
-                  </td>
-                  <td className="py-2">
-                    <span className="px-2 py-0.5 rounded-badge" style={{ background: RAG_BADGE[rag].bg, color: RAG_BADGE[rag].text }}>
-                      {RAG_BADGE[rag].label}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {PORTFOLIO_BOARDS.map((board) => {
+              const rows = portfolioBoards[board.key]
+              return (
+                <div key={board.key} className="rounded-lg border border-border flex flex-col min-h-0" style={{ background: "var(--color-surface)" }}>
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-text-primary">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: board.color }} />
+                      {board.label}
                     </span>
-                  </td>
-                  <td className="py-2 pr-2">
-                    <div className="bg-surface rounded-full h-1.5">
-                      <div className="h-1.5 rounded-full" style={{ width: `${active?.progressPercent ?? 0}%`, background: RAG_BAR_COLOR[rag] }} />
-                    </div>
-                  </td>
-                  <td className="py-2" style={overdue ? { color: "var(--color-rag-red)" } : { color: "var(--color-text-muted)" }}>
-                    {due ? formatDateShort(due) : "—"}
-                  </td>
-                  <td className="py-2 text-text-muted">{active?.version ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {portfolioRows.length > 8 && (
-            <button type="button" onClick={() => setShowAllProjects((v) => !v)} className="mt-3 text-xs font-medium text-accent hover:underline">
-              {showAllProjects ? "ย่อรายการ" : `ดูทั้งหมด ${portfolioRows.length} โปรเจกต์`} →
-            </button>
-          )}
+                    <span className="text-xs font-medium text-text-muted">{rows.length}</span>
+                  </div>
+                  <div className="flex flex-col overflow-y-auto" style={{ maxHeight: 280 }}>
+                    {rows.length === 0 ? (
+                      <p className="text-xs text-text-muted px-3 py-4 text-center">ไม่มีโปรเจกต์</p>
+                    ) : (
+                      rows.map(({ project, rag, owner, due, overdue }) => (
+                        <div
+                          key={project.id}
+                          className="flex items-center gap-2 px-3 py-2 border-b border-border last:border-0 cursor-pointer hover:bg-card"
+                          onClick={() => setOpenProjectId(project.id)}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: RAG_BAR_COLOR[rag] }} />
+                          <span className="flex-1 min-w-0 truncate text-xs text-text-primary" title={project.name}>{project.name}</span>
+                          {owner && <Avatar name={owner.name} avatarUrl={owner.avatarUrl} size="sm" className="shrink-0" />}
+                          <span
+                            className="text-[10px] shrink-0"
+                            style={{ color: overdue ? "var(--color-rag-red)" : "var(--color-text-muted)" }}
+                          >
+                            {due ? formatDateShort(due) : "—"}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
 
         <div className="bg-card border border-border rounded-card p-4">
