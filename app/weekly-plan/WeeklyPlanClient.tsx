@@ -5,6 +5,7 @@ import { weekStart as computeWeekStart, addDays, formatDate, toDateParam } from 
 import { WeekNav } from "@/components/weekly-plan/WeekNav"
 import { WeekSummaryCards } from "@/components/weekly-plan/WeekSummaryCards"
 import { EditablePlanItems, type PlanItem, type PlanItemStatus } from "@/components/weekly-plan/EditablePlanItems"
+import { WeekRecap } from "@/components/weekly-plan/WeekRecap"
 import { PersonFocusCard, type PersonFocus, type FocusTask } from "@/components/weekly-plan/PersonFocusCard"
 import { ProjectHealthTable, type ProjectHealthRow } from "@/components/weekly-plan/ProjectHealthTable"
 
@@ -81,6 +82,7 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
   const [selectedWeekStart, setSelectedWeekStart] = useState(currentWeekStart)
   const selectedWeekEnd = useMemo(() => addDays(selectedWeekStart, 6), [selectedWeekStart])
   const isCurrentWeek = selectedWeekStart.getTime() === currentWeekStart.getTime()
+  const isFutureWeek = selectedWeekStart.getTime() > currentWeekStart.getTime()
 
   const [items, setItems] = useState<PlanItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -158,6 +160,13 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
         : i
     )))
     fetch(`/api/weekly-plan/checklist/${checklistId}`, { method: "DELETE" })
+  }
+
+  async function handleCarryToNextWeek(itemId: string): Promise<PlanItem> {
+    const res = await fetch(`/api/weekly-plan/items/${itemId}/carry`, { method: "POST" })
+    const { carriedItem } = await res.json()
+    setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, status: "carried_over" } : i)))
+    return carriedItem
   }
 
   async function handleSync() {
@@ -306,6 +315,15 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
               onChecklistAdd={handleChecklistAdd}
               onChecklistToggle={handleChecklistToggle}
               onChecklistDelete={handleChecklistDelete}
+            />
+          )}
+
+          {!loading && !isFutureWeek && (
+            <WeekRecap
+              weekStart={selectedWeekStart}
+              items={items}
+              interruptHours={weekInterruptHours}
+              onCarry={handleCarryToNextWeek}
             />
           )}
 

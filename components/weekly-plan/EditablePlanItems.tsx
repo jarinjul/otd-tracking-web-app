@@ -24,6 +24,7 @@ export interface PlanItem {
   status: PlanItemStatus
   sortOrder: number
   checklist: ChecklistItem[]
+  carriedFromId: string | null
 }
 
 const TYPE_STYLE: Record<string, { bg: string; color: string; label: string }> = {

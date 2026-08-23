@@ -152,39 +152,47 @@ export async function getOrCreateWeekPlan(weekParam: string) {
   const prevWeekStart = addDays(normalized, -7)
   const prevPlan = await prisma.weekPlan.findUnique({
     where: { weekStart: prevWeekStart },
-    include: { items: true },
+    include: { items: { include: { checklist: true } } },
   })
   const carryItems = prevPlan ? prevPlan.items.filter((i) => i.status === "carried_over") : []
 
-  const toCreate = [
-    ...autoItems.map((a, i) => ({
-      weekPlanId: plan!.id,
-      source: "auto" as const,
-      itemType: a.itemType,
-      title: a.title,
-      subtitle: a.subtitle,
-      projectName: a.projectName,
-      owner: a.owner,
-      sourceRefId: a.sourceRefId,
-      sortOrder: i,
-    })),
-    ...carryItems.map((c, i) => ({
-      weekPlanId: plan!.id,
-      source: c.source,
-      itemType: c.itemType,
-      title: `↻ ${c.title}`,
-      subtitle: c.subtitle,
-      note: c.note,
-      projectName: c.projectName,
-      owner: c.owner,
-      sourceRefId: c.sourceRefId,
-      carriedFromId: c.id,
-      sortOrder: autoItems.length + i,
-    })),
-  ]
+  if (autoItems.length > 0) {
+    await prisma.weekPlanItem.createMany({
+      data: autoItems.map((a, i) => ({
+        weekPlanId: plan!.id,
+        source: "auto" as const,
+        itemType: a.itemType,
+        title: a.title,
+        subtitle: a.subtitle,
+        projectName: a.projectName,
+        owner: a.owner,
+        sourceRefId: a.sourceRefId,
+        sortOrder: i,
+      })),
+    })
+  }
 
-  if (toCreate.length > 0) {
-    await prisma.weekPlanItem.createMany({ data: toCreate })
+  // Individual creates (not createMany) so each carried item can bring its
+  // still-open checklist along — createMany can't do nested relation writes.
+  for (const [i, c] of carryItems.entries()) {
+    await prisma.weekPlanItem.create({
+      data: {
+        weekPlanId: plan!.id,
+        source: c.source,
+        itemType: c.itemType,
+        title: `↻ ${c.title}`,
+        subtitle: c.subtitle,
+        note: c.note,
+        projectName: c.projectName,
+        owner: c.owner,
+        sourceRefId: c.sourceRefId,
+        carriedFromId: c.id,
+        sortOrder: autoItems.length + i,
+        checklist: {
+          create: c.checklist.filter((ci) => !ci.done).map((ci, j) => ({ text: ci.text, sortOrder: j })),
+        },
+      },
+    })
   }
 
   return prisma.weekPlan.findUniqueOrThrow({
