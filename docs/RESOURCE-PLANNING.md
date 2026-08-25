@@ -127,10 +127,10 @@ Server component ดึงครั้งเดียว: people ทั้งห
 - Optimistic update ต้อง rollback ถ้า API fail (แสดง error สั้นๆ)
 
 ### Acceptance criteria — Phase 2
-- [ ] แก้ชั่วโมงจากเซลล์ → refresh หน้า `/workload` แล้วเห็นค่าเดียวกัน (สอง view แหล่งเดียวกันจริง)
-- [ ] Assign คนใหม่ลง release ที่ยังไม่เคยมี entry ได้ / ใส่ 0 แล้วแถวหายทั้งสองหน้า
-- [ ] ธง "ยังไม่ได้วางคน" หายไปหลัง assign คนแรกลง release นั้น
-- [ ] กดเร็วๆ หลายครั้งไม่เกิด entry ซ้ำ (unique constraint + upsert)
+- [x] แก้ชั่วโมงจากเซลล์ → refresh หน้า `/workload` แล้วเห็นค่าเดียวกัน (สอง view แหล่งเดียวกันจริง) — ทดสอบแก้ SmartOFA NEX ของ Chawakorn 69→79h แล้ว revert คืน 79→69h เทียบกับ `/workload` ตรงทุกครั้ง (คืนค่าจริงใน DB แล้ว)
+- [x] Assign คนใหม่ลง release ที่ยังไม่เคยมี entry ได้ / ใส่ 0 แล้วแถวหายทั้งสองหน้า — ทดสอบ assign Chakrit ลง "AIMS DAR 2.9 · v1.0" 4h แล้วลบด้วยการใส่ 0 ยืนยันด้วย query DB ตรงว่าหายจริง
+- [x] ธง "ยังไม่ได้วางคน" หายไปหลัง assign คนแรกลง release นั้น — ข้อมูลจริงตอนนี้ไม่มี release ที่เข้าเงื่อนไข ธง เลยสร้าง release ทดสอบชั่วคราว (`zztest-unassigned-release`, ลบแล้วหลังทดสอบ) ยืนยันธงหายทันทีหลัง assign
+- [x] กดเร็วๆ หลายครั้งไม่เกิด entry ซ้ำ (unique constraint + upsert) — พึ่ง unique constraint (`releaseId,personId,month`) ของ DB + upsert ใน `/api/workload` เดิม, Assign dialog ปิดปุ่ม submit ระหว่าง `submitting` กันกดซ้ำจาก UI ฝั่งเดียวกัน — ไม่ได้ stress-test แบบ concurrent จริง
 
 ---
 

@@ -1,13 +1,14 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { ChevronLeft, ChevronRight, AlertTriangle, TrendingDown, Flag } from "lucide-react"
+import { ChevronLeft, ChevronRight, AlertTriangle, TrendingDown, Flag, Plus } from "lucide-react"
 import { Avatar } from "@/components/ui/Avatar"
 import { SlidePanel } from "@/components/ui/SlidePanel"
-import { TARGET_RATIO, monthKey, workloadStatus, computePersonFocus } from "@/lib/utils/workload"
+import { AssignDialog } from "./AssignDialog"
+import { TARGET_RATIO, monthKey, workloadStatus } from "@/lib/utils/workload"
 import { buildWeekBuckets, distributeMonthlyHoursToWeeks, weekLabel, type WeekBucket } from "@/lib/utils/weekEstimate"
 import { ROLE_LABELS } from "@/lib/types"
-import type { ProjectWithRelations, ProjectRole } from "@/lib/types"
+import type { ProjectRole } from "@/lib/types"
 
 type PersonOpt = { id: string; name: string; avatarUrl: string | null; monthlyCapacityHours: number; roles: ProjectRole[] }
 type WorkloadEntryOpt = { personId: string; month: Date | string; hours: number }
@@ -75,25 +76,143 @@ export function ResourcePlanningClient({ people, projects, interrupts }: Resourc
     [currentMonthKey, effectiveStartOffset, rangeMonths]
   )
 
-  // ── Flatten release workload entries once, keeping release dates for the week-view estimator ──
-  const flatEntries = useMemo(() => {
-    const list: { personId: string; month: string; hours: number; releaseId: string; startDate: Date | null; endDate: Date | null }[] = []
+  // ── Editable allocation state (Phase 2) ──
+  // Release/project metadata never changes from this page, so it's indexed once from the server
+  // props. Hours are mutable local state (`entryHours`) so cell edits and Assigns can update the
+  // grid, KPIs, and outlook instantly without a full page refetch — the source of truth is still
+  // POST /api/workload; this is just an optimistic local mirror of it.
+  function cellKey(releaseId: string, personId: string, month: string): string {
+    return `${releaseId}::${personId}::${month}`
+  }
+
+  const releaseIndex = useMemo(() => {
+    const map = new Map<string, { version: string; startDate: Date | null; endDate: Date | null; projectId: string; projectName: string }>()
+    for (const project of projects) {
+      for (const release of project.releases) {
+        map.set(release.id, {
+          version: release.version,
+          startDate: release.startDate ? toDate(release.startDate) : null,
+          endDate: release.endDate ? toDate(release.endDate) : null,
+          projectId: project.id,
+          projectName: project.name,
+        })
+      }
+    }
+    return map
+  }, [projects])
+
+  const [entryHours, setEntryHours] = useState<Record<string, number>>(() => {
+    const map: Record<string, number> = {}
     for (const project of projects) {
       for (const release of project.releases) {
         for (const e of release.workloadEntries) {
-          list.push({
-            personId: e.personId,
-            month: monthKey(e.month),
-            hours: e.hours,
-            releaseId: release.id,
-            startDate: release.startDate ? toDate(release.startDate) : null,
-            endDate: release.endDate ? toDate(release.endDate) : null,
-          })
+          map[cellKey(release.id, e.personId, monthKey(e.month))] = e.hours
         }
       }
     }
+    return map
+  })
+
+  const [saveError, setSaveError] = useState<string | null>(null)
+  function flashSaveError(message: string) {
+    setSaveError(message)
+    setTimeout(() => setSaveError(null), 4000)
+  }
+
+  async function postWorkloadEntry(releaseId: string, personId: string, month: string, hours: number): Promise<boolean> {
+    try {
+      const res = await fetch("/api/workload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ releaseId, personId, month, hours }),
+      })
+      return res.ok || res.status === 204
+    } catch {
+      return false
+    }
+  }
+
+  // The allocation list in the side panel is filtered to hours > 0 (so a saved-to-0 row disappears,
+  // per spec). If typing were wired straight into entryHours, clearing the field to retype a new
+  // value would hit an empty string mid-edit and instantly delete the row out from under the input.
+  // Draft text is kept separate and only committed (and only then POSTed) on blur.
+  const [draftInputs, setDraftInputs] = useState<Record<string, string>>({})
+  function inputValueFor(key: string): string {
+    if (key in draftInputs) return draftInputs[key]
+    const h = entryHours[key]
+    return h ? String(Math.round(h)) : ""
+  }
+  function handleDraftChange(key: string, raw: string) {
+    setDraftInputs((prev) => ({ ...prev, [key]: raw }))
+  }
+  async function commitEntry(releaseId: string, personId: string, month: string) {
+    const key = cellKey(releaseId, personId, month)
+    const raw = draftInputs[key]
+    setDraftInputs((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    if (raw === undefined) return
+    const value = raw === "" ? 0 : Number(raw)
+    if (Number.isNaN(value)) return
+    const baseline = entryHours[key] ?? 0
+    if (value === baseline) return
+    setEntryHours((prev) => {
+      const next = { ...prev }
+      if (value <= 0) delete next[key]
+      else next[key] = value
+      return next
+    })
+    const ok = await postWorkloadEntry(releaseId, personId, month, value)
+    if (!ok) {
+      setEntryHours((prev) => {
+        const next = { ...prev }
+        if (baseline <= 0) delete next[key]
+        else next[key] = baseline
+        return next
+      })
+      flashSaveError("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง")
+    }
+  }
+  // Used by the Assign dialog — a brand-new entry, no draft/baseline involved.
+  async function handleAssignSubmit({ releaseId, personId, month, hours }: { releaseId: string; personId: string; month: string; hours: number }): Promise<boolean> {
+    const ok = await postWorkloadEntry(releaseId, personId, month, hours)
+    if (ok) setEntryHours((prev) => ({ ...prev, [cellKey(releaseId, personId, month)]: hours }))
+    return ok
+  }
+
+  // ── Derived from entryHours (not the static props) so edits propagate everywhere automatically ──
+  const flatEntries = useMemo(() => {
+    const list: { personId: string; month: string; hours: number; releaseId: string; startDate: Date | null; endDate: Date | null }[] = []
+    for (const [key, hours] of Object.entries(entryHours)) {
+      if (hours <= 0) continue
+      const [releaseId, personId, month] = key.split("::")
+      const release = releaseIndex.get(releaseId)
+      list.push({ personId, month, hours, releaseId, startDate: release?.startDate ?? null, endDate: release?.endDate ?? null })
+    }
     return list
-  }, [projects])
+  }, [entryHours, releaseIndex])
+
+  const releaseTotals = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const [key, hours] of Object.entries(entryHours)) {
+      if (hours <= 0) continue
+      const releaseId = key.split("::")[0]
+      map.set(releaseId, (map.get(releaseId) ?? 0) + hours)
+    }
+    return map
+  }, [entryHours])
+
+  function personReleaseBreakdown(personId: string, month: string) {
+    return flatEntries
+      .filter((e) => e.personId === personId && e.month === month)
+      .map((e) => {
+        const release = releaseIndex.get(e.releaseId)
+        return { releaseId: e.releaseId, version: release?.version ?? "?", projectName: release?.projectName ?? "?", hours: e.hours }
+      })
+      .sort((a, b) => b.hours - a.hours)
+  }
 
   // personId -> month -> release hours only. This is deliberately release-only (no interrupts) so
   // it matches /workload's per-person % exactly — that page predates InterruptTask and was never
@@ -222,24 +341,42 @@ export function ResourcePlanningClient({ people, projects, interrupts }: Resourc
   const viewEndDate = useMemo(() => { const [y, m] = viewMonths[viewMonths.length - 1].split("-").map(Number); return new Date(y, m, 0) }, [viewMonths])
 
   const unassignedReleases = useMemo(() => {
-    const rows: { releaseId: string; version: string; projectName: string; startDate: Date }[] = []
+    const rows: { releaseId: string; projectId: string; version: string; projectName: string; startDate: Date }[] = []
     for (const project of projects) {
       for (const release of project.releases) {
         if (!release.startDate) continue
         const start = toDate(release.startDate)
         if (start < viewStartDate || start > viewEndDate) continue
-        const totalAssigned = release.workloadEntries.reduce((s, e) => s + e.hours, 0)
-        if (totalAssigned === 0) rows.push({ releaseId: release.id, version: release.version, projectName: project.name, startDate: start })
+        if ((releaseTotals.get(release.id) ?? 0) === 0) rows.push({ releaseId: release.id, projectId: project.id, version: release.version, projectName: project.name, startDate: start })
       }
     }
     rows.sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
     return rows
-  }, [projects, viewStartDate, viewEndDate])
+  }, [projects, viewStartDate, viewEndDate, releaseTotals])
 
   // ── Side panel ──
   const panelPerson = panel ? people.find((p) => p.id === panel.personId) ?? null : null
   const panelMinMonth = currentMonthKey
   const panelMaxMonth = addMonthsKey(currentMonthKey, FETCH_MONTHS_AHEAD - 1)
+  const assignableMonths = useMemo(() => Array.from({ length: FETCH_MONTHS_AHEAD }, (_, i) => addMonthsKey(currentMonthKey, i)), [currentMonthKey])
+
+  // ── Assign dialog (Phase 2) ──
+  const [assignDialog, setAssignDialog] = useState<{
+    defaultPersonId?: string
+    lockPerson?: boolean
+    defaultReleaseId?: string
+    lockRelease?: boolean
+    defaultMonth: string
+  } | null>(null)
+
+  function openAssignFromPanel() {
+    if (!panel) return
+    setAssignDialog({ defaultPersonId: panel.personId, lockPerson: true, defaultMonth: panel.month })
+  }
+  function openAssignFromRelease(releaseId: string, startDate: Date) {
+    const month = monthKey(startDate) >= panelMinMonth ? monthKey(startDate) : panelMinMonth
+    setAssignDialog({ defaultReleaseId: releaseId, lockRelease: true, defaultMonth: month })
+  }
 
   function openPanel(personId: string, month: string) {
     setPanel({ personId, month })
@@ -468,8 +605,16 @@ export function ResourcePlanningClient({ people, projects, interrupts }: Resourc
             ) : (
               <div className="flex flex-wrap gap-2">
                 {unassignedReleases.map((r) => (
-                  <span key={r.releaseId} className="text-xs px-2.5 py-1.5 rounded-lg" style={{ background: "var(--color-rag-amber-light)", color: "var(--color-rag-amber-text)" }}>
+                  <span key={r.releaseId} className="inline-flex items-center gap-1.5 text-xs pl-2.5 pr-1.5 py-1.5 rounded-lg" style={{ background: "var(--color-rag-amber-light)", color: "var(--color-rag-amber-text)" }}>
                     {r.projectName} · {r.version} — เริ่ม {monthLabel(monthKey(r.startDate))}
+                    <button
+                      type="button"
+                      onClick={() => openAssignFromRelease(r.releaseId, r.startDate)}
+                      className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full font-semibold"
+                      style={{ background: "rgba(0,0,0,0.08)" }}
+                    >
+                      <Plus size={11} /> Assign
+                    </button>
                   </span>
                 ))}
               </div>
@@ -480,10 +625,13 @@ export function ResourcePlanningClient({ people, projects, interrupts }: Resourc
 
       <SlidePanel open={!!panel} onClose={() => setPanel(null)} width="w-[420px]">
         {panelPerson && panel && (() => {
-          const focus = computePersonFocus(panelPerson, projects as unknown as ProjectWithRelations[], panel.month)
-          const interruptH = interruptHours(panelPerson.id, panel.month)
+          const releases = personReleaseBreakdown(panelPerson.id, panel.month)
+          const totalHours = releaseHours(panelPerson.id, panel.month)
+          const pct = personPct(panelPerson, panel.month)
+          const status = workloadStatus(pct)
           const target = personTarget(panelPerson)
-          const combinedPlanned = focus.totalHours + interruptH
+          const interruptH = interruptHours(panelPerson.id, panel.month)
+          const combinedPlanned = totalHours + interruptH
           const available = target - combinedPlanned
           return (
             <>
@@ -513,32 +661,58 @@ export function ResourcePlanningClient({ people, projects, interrupts }: Resourc
               </div>
 
               <div className="flex-1 overflow-y-auto">
+                {saveError && (
+                  <div className="px-6 py-2 text-xs font-medium" style={{ background: "var(--color-rag-red-light)", color: "var(--color-rag-red-text)" }}>
+                    {saveError}
+                  </div>
+                )}
+
                 <div className="px-6 py-5 border-b" style={{ borderColor: "var(--color-border)" }}>
                   <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--color-text-muted)" }}>Utilization</p>
                   <div className="flex items-end justify-between mb-2">
-                    <span className="text-3xl font-bold" style={{ color: focus.status.color }}>{focus.pct}%</span>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: focus.status.bg, color: focus.status.color }}>{focus.status.label}</span>
+                    <span className="text-3xl font-bold" style={{ color: status.color }}>{pct}%</span>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: status.bg, color: status.color }}>{status.label}</span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--color-surface)" }}>
-                    <div className="h-full rounded-full" style={{ width: `${Math.min(100, focus.pct)}%`, background: focus.status.color }} />
+                    <div className="h-full rounded-full" style={{ width: `${Math.min(100, pct)}%`, background: status.color }} />
                   </div>
-                  <p className="text-xs mt-1.5" style={{ color: "var(--color-text-muted)" }}>{focus.totalHours}h / {focus.target}h target</p>
+                  <p className="text-xs mt-1.5" style={{ color: "var(--color-text-muted)" }}>{Math.round(totalHours)}h / {Math.round(target)}h target</p>
                 </div>
 
                 <div className="px-6 py-5 border-b" style={{ borderColor: "var(--color-border)" }}>
-                  <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--color-text-muted)" }}>Current Allocation</p>
-                  {focus.releases.length === 0 ? (
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>Current Allocation</p>
+                    <button
+                      type="button"
+                      onClick={openAssignFromPanel}
+                      className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg"
+                      style={{ background: "var(--color-accent-light)", color: "var(--color-accent)" }}
+                    >
+                      <Plus size={12} /> Assign
+                    </button>
+                  </div>
+                  {releases.length === 0 ? (
                     <p className="text-xs italic" style={{ color: "var(--color-text-muted)" }}>ไม่มี release ที่วางไว้เดือนนี้</p>
                   ) : (
                     <div className="flex flex-col gap-1.5">
-                      {focus.releases.map((r) => (
-                        <div key={r.releaseId} className="flex items-center justify-between text-xs">
-                          <span style={{ color: "var(--color-text-muted)" }}>{r.projectName} · {r.version}</span>
-                          <span className="font-medium" style={{ color: "var(--color-text-primary)" }}>{Math.round(r.hours)}h</span>
+                      {releases.map((r) => (
+                        <div key={r.releaseId} className="flex items-center justify-between gap-2 text-xs">
+                          <span className="min-w-0 truncate" style={{ color: "var(--color-text-muted)" }} title={`${r.projectName} · ${r.version}`}>{r.projectName} · {r.version}</span>
+                          <input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={inputValueFor(cellKey(r.releaseId, panelPerson.id, panel.month))}
+                            onChange={(e) => handleDraftChange(cellKey(r.releaseId, panelPerson.id, panel.month), e.target.value)}
+                            onBlur={() => commitEntry(r.releaseId, panelPerson.id, panel.month)}
+                            className="w-16 px-1.5 py-1 text-center text-xs rounded border shrink-0"
+                            style={inputStyle}
+                          />
                         </div>
                       ))}
                     </div>
                   )}
+                  <p className="text-xs mt-2 italic" style={{ color: "var(--color-text-muted)" }}>ใส่ 0 เพื่อลบรายการ — บันทึกอัตโนมัติเมื่อออกจากช่อง</p>
                 </div>
 
                 {interruptH > 0 && (
@@ -560,6 +734,21 @@ export function ResourcePlanningClient({ people, projects, interrupts }: Resourc
           )
         })()}
       </SlidePanel>
+
+      <AssignDialog
+        open={!!assignDialog}
+        onClose={() => setAssignDialog(null)}
+        people={people}
+        projects={projects}
+        monthOptions={assignableMonths}
+        monthLabel={monthLabel}
+        defaultPersonId={assignDialog?.defaultPersonId}
+        lockPerson={assignDialog?.lockPerson}
+        defaultReleaseId={assignDialog?.defaultReleaseId}
+        lockRelease={assignDialog?.lockRelease}
+        defaultMonth={assignDialog?.defaultMonth ?? currentMonthKey}
+        onSubmit={handleAssignSubmit}
+      />
     </div>
   )
 }
