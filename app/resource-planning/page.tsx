@@ -13,7 +13,7 @@ export default async function ResourcePlanningPage() {
   const rangeStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
   const rangeEnd = new Date(Date.UTC(now.getFullYear(), now.getMonth() + FETCH_MONTHS_AHEAD, 1))
 
-  const [people, projects, interrupts] = await Promise.all([
+  const [people, projects, interrupts, memberships] = await Promise.all([
     prisma.person.findMany({
       select: { id: true, name: true, avatarUrl: true, monthlyCapacityHours: true, roles: true },
       orderBy: { name: "asc" },
@@ -43,7 +43,10 @@ export default async function ResourcePlanningPage() {
       where: { date: { gte: rangeStart, lt: rangeEnd } },
       select: { personId: true, date: true, hours: true },
     }),
+    prisma.projectMember.findMany({
+      select: { personId: true, projectId: true },
+    }),
   ])
 
-  return <ResourcePlanningClient people={people} projects={projects} interrupts={interrupts} />
+  return <ResourcePlanningClient people={people} projects={projects} interrupts={interrupts} memberships={memberships} />
 }

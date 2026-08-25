@@ -155,10 +155,10 @@ Server component ดึงครั้งเดียว: people ทั้งห
 - ไม่มีอะไรจะแนะนำ = บอกตรงๆ "ไม่พบ overload ในช่วงที่ดู" — ห้าม pad คำแนะนำเกรดต่ำมาเติม
 
 ### Acceptance criteria — Phase 3
-- [ ] สร้างสถานการณ์ overload จำลอง (เพิ่มชั่วโมงชั่วคราวใน dev) → ข้อเสนอโผล่ ถูกเงื่อนไข ถูกลำดับความชอบ → **ลบข้อมูลจำลองคืนหลังทดสอบ (DB = production)**
-- [ ] Apply แล้ว: ชั่วโมงย้ายจริงทั้งสองฝั่ง, before/after % ตรงกับที่โชว์, คำแนะนำ refresh
-- [ ] Receiver ไม่มีทางถูกดันเกิน 100% จากการ Apply
-- [ ] ไม่มี overload → แสดงข้อความว่าง ไม่ error
+- [x] สร้างสถานการณ์ overload จำลอง (เพิ่มชั่วโมงชั่วคราวใน dev) → ข้อเสนอโผล่ ถูกเงื่อนไข ถูกลำดับความชอบ → **ลบข้อมูลจำลองคืนหลังทดสอบ (DB = production)** — ไม่ต้องจำลองเลย ข้อมูลจริง Aug–Oct 2026 มี overload อยู่แล้ว (Peerakit, jarin) เห็นข้อเสนอถูกเงื่อนไข/ลำดับความชอบ (a) ProjectMember ก่อน (b) role overlap (c) pct ต่ำสุด ตรงสเปค — ระหว่างพัฒนาเจอบั๊กจริง: 3 suggestion แรกเสนอย้าย 8h ไปหา Chakrit คนเดียวกันซ้ำ (ถ้า apply ทั้ง 3 จะดันเกิน 100%) แก้ด้วย running "virtual planned hours" ใน `lib/advisor.ts` กันไม่ให้ suggestion ในชุดเดียวกัน double-book receiver คนเดิม
+- [x] Apply แล้ว: ชั่วโมงย้ายจริงทั้งสองฝั่ง, before/after % ตรงกับที่โชว์, คำแนะนำ refresh — ทดสอบ apply จริง Peerakit→Chakrit 8h (SecDevOps CI/CD, Aug 2026) เทียบ DB ตรง 100%, suggestion หายจากลิสต์ทันทีหลัง apply, **revert ข้อมูลจริงคืนหลังทดสอบแล้ว** (ยืนยันด้วย query DB)
+- [x] Receiver ไม่มีทางถูกดันเกิน 100% จากการ Apply — proposed = floor(min(excess, entry.hours, receiverGap)) การันตีไม่เกิน target เสมอ + running virtual state กันชน suggestion อื่นในชุดเดียวกัน
+- [x] ไม่มี overload → แสดงข้อความว่าง ไม่ error — ทดสอบเลื่อนไปช่วง Feb–Apr 2027 (ไม่มีข้อมูล) แสดง "ไม่พบ overload ในช่วงที่ดู" ไม่มี error ใน console
 
 ---
 

@@ -1,12 +1,13 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { ChevronLeft, ChevronRight, AlertTriangle, TrendingDown, Flag, Plus } from "lucide-react"
+import { ChevronLeft, ChevronRight, AlertTriangle, TrendingDown, Flag, Plus, Sparkles } from "lucide-react"
 import { Avatar } from "@/components/ui/Avatar"
 import { SlidePanel } from "@/components/ui/SlidePanel"
 import { AssignDialog } from "./AssignDialog"
 import { TARGET_RATIO, monthKey, workloadStatus } from "@/lib/utils/workload"
 import { buildWeekBuckets, distributeMonthlyHoursToWeeks, weekLabel, type WeekBucket } from "@/lib/utils/weekEstimate"
+import { generateAdvisorSuggestions, type AdvisorSuggestion } from "@/lib/advisor"
 import { ROLE_LABELS } from "@/lib/types"
 import type { ProjectRole } from "@/lib/types"
 
@@ -22,11 +23,13 @@ type ReleaseOpt = {
 }
 type ProjectOpt = { id: string; name: string; releases: ReleaseOpt[] }
 type InterruptOpt = { personId: string; date: Date | string; hours: number }
+type MembershipOpt = { personId: string; projectId: string }
 
 interface ResourcePlanningClientProps {
   people: PersonOpt[]
   projects: ProjectOpt[]
   interrupts: InterruptOpt[]
+  memberships: MembershipOpt[]
 }
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -61,7 +64,7 @@ function KpiCard({ label, value, valueColor, subtitle }: { label: string; value:
   )
 }
 
-export function ResourcePlanningClient({ people, projects, interrupts }: ResourcePlanningClientProps) {
+export function ResourcePlanningClient({ people, projects, interrupts, memberships }: ResourcePlanningClientProps) {
   const currentMonthKey = useMemo(() => monthKey(new Date()), [])
   const [rangeMonths, setRangeMonths] = useState<3 | 6>(3)
   const [startOffset, setStartOffset] = useState(0)
@@ -354,6 +357,80 @@ export function ResourcePlanningClient({ people, projects, interrupts }: Resourc
     return rows
   }, [projects, viewStartDate, viewEndDate, releaseTotals])
 
+  // ── Advisor (Phase 3) — pure rule-based suggestions, recomputed from entryHours on every render
+  // so it self-refreshes after every Apply, exactly like the KPI row and Capacity Outlook already do ──
+  const membershipsByProject = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    for (const m of memberships) {
+      if (!map.has(m.projectId)) map.set(m.projectId, new Set())
+      map.get(m.projectId)!.add(m.personId)
+    }
+    return map
+  }, [memberships])
+
+  const advisorEntries = useMemo(
+    () =>
+      flatEntries.map((e) => {
+        const release = releaseIndex.get(e.releaseId)
+        return {
+          releaseId: e.releaseId,
+          personId: e.personId,
+          month: e.month,
+          hours: e.hours,
+          projectId: release?.projectId ?? "",
+          projectName: release?.projectName ?? "?",
+          releaseVersion: release?.version ?? "?",
+        }
+      }),
+    [flatEntries, releaseIndex]
+  )
+
+  const suggestions = useMemo(
+    () =>
+      generateAdvisorSuggestions({
+        months: viewMonths,
+        people,
+        entries: advisorEntries,
+        membershipsByProject,
+        roleLabels: ROLE_LABELS,
+      }),
+    [viewMonths, people, advisorEntries, membershipsByProject]
+  )
+
+  const [confirmingSuggestion, setConfirmingSuggestion] = useState<string | null>(null)
+  const [applyingSuggestion, setApplyingSuggestion] = useState<string | null>(null)
+
+  function suggestionKey(s: AdvisorSuggestion): string {
+    return `${s.month}::${s.releaseId}::${s.giverId}::${s.receiverId}::${s.hours}`
+  }
+
+  async function handleApplySuggestion(s: AdvisorSuggestion) {
+    const key = suggestionKey(s)
+    setApplyingSuggestion(key)
+    const giverKey = cellKey(s.releaseId, s.giverId, s.month)
+    const receiverKey = cellKey(s.releaseId, s.receiverId, s.month)
+    const newGiverHours = (entryHours[giverKey] ?? 0) - s.hours
+    const newReceiverHours = (entryHours[receiverKey] ?? 0) + s.hours
+
+    const ok1 = await postWorkloadEntry(s.releaseId, s.giverId, s.month, newGiverHours)
+    if (ok1) {
+      setEntryHours((prev) => {
+        const next = { ...prev }
+        if (newGiverHours <= 0) delete next[giverKey]
+        else next[giverKey] = newGiverHours
+        return next
+      })
+    }
+    const ok2 = ok1 && (await postWorkloadEntry(s.releaseId, s.receiverId, s.month, newReceiverHours))
+    if (ok2) {
+      setEntryHours((prev) => ({ ...prev, [receiverKey]: newReceiverHours }))
+    }
+    if (!ok1) flashSaveError("Apply ไม่สำเร็จ ลองใหม่อีกครั้ง")
+    else if (!ok2) flashSaveError("ลดชั่วโมงฝั่งที่ล้นแล้ว แต่เพิ่มให้อีกฝั่งไม่สำเร็จ ลองใหม่อีกครั้ง")
+    setApplyingSuggestion(null)
+    setConfirmingSuggestion(null)
+  }
+
   // ── Side panel ──
   const panelPerson = panel ? people.find((p) => p.id === panel.personId) ?? null : null
   const panelMinMonth = currentMonthKey
@@ -620,6 +697,72 @@ export function ResourcePlanningClient({ people, projects, interrupts }: Resourc
               </div>
             )}
           </div>
+        </div>
+
+        {/* Advisor — rule-based only, no LLM/external API (see lib/advisor.ts) */}
+        <div className="rounded-xl border p-5 mt-6" style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}>
+          <p className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: "var(--color-text-primary)" }}>
+            <Sparkles size={14} /> คำแนะนำ (rule-based)
+          </p>
+          <p className="text-xs mb-4" style={{ color: "var(--color-text-muted)" }}>ตรวจ overload อัตโนมัติแล้วเสนอย้ายชั่วโมงที่ทำได้จริง — ไม่ใช้ AI ไม่มี external call</p>
+
+          {suggestions.length === 0 ? (
+            <p className="text-xs italic" style={{ color: "var(--color-text-muted)" }}>ไม่พบ overload ในช่วงที่ดู</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {suggestions.map((s) => {
+                const key = suggestionKey(s)
+                const isConfirming = confirmingSuggestion === key
+                const isApplying = applyingSuggestion === key
+                return (
+                  <div key={key} className="rounded-lg border p-3" style={{ borderColor: "var(--color-border)" }}>
+                    <p className="text-sm" style={{ color: "var(--color-text-primary)" }}>
+                      <strong>{monthLabel(s.month)}</strong> — ย้าย <strong>{s.hours}h</strong> ของ {s.projectName} · {s.releaseVersion} จาก <strong>{s.giverName}</strong> ไป <strong>{s.receiverName}</strong>
+                    </p>
+                    <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>{s.reason}</p>
+                    <div className="flex items-center gap-4 mt-2 text-xs flex-wrap">
+                      <span style={{ color: "var(--color-text-muted)" }}>{s.giverName}: <strong style={{ color: "var(--color-rag-red-text)" }}>{s.giverBeforePct}%</strong> → <strong style={{ color: "var(--color-text-primary)" }}>{s.giverAfterPct}%</strong></span>
+                      <span style={{ color: "var(--color-text-muted)" }}>{s.receiverName}: <strong>{s.receiverBeforePct}%</strong> → <strong style={{ color: "var(--color-text-primary)" }}>{s.receiverAfterPct}%</strong></span>
+                    </div>
+                    <div className="mt-2.5">
+                      {isConfirming ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>ยืนยันย้าย {s.hours}h?</span>
+                          <button
+                            type="button"
+                            onClick={() => handleApplySuggestion(s)}
+                            disabled={isApplying}
+                            className="px-2.5 py-1 text-xs font-medium rounded-lg text-white disabled:opacity-50"
+                            style={{ background: "var(--color-accent)" }}
+                          >
+                            {isApplying ? "กำลังย้าย..." : "ยืนยัน"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmingSuggestion(null)}
+                            disabled={isApplying}
+                            className="px-2.5 py-1 text-xs font-medium rounded-lg"
+                            style={{ color: "var(--color-text-muted)" }}
+                          >
+                            ยกเลิก
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingSuggestion(key)}
+                          className="px-2.5 py-1 text-xs font-medium rounded-lg"
+                          style={{ background: "var(--color-accent-light)", color: "var(--color-accent)" }}
+                        >
+                          Apply
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 
