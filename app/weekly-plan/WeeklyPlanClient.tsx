@@ -158,6 +158,19 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
     })
   }
 
+  function handleChecklistEdit(planItemId: string, checklistId: string, text: string) {
+    setItems((prev) => prev.map((i) => (
+      i.id === planItemId
+        ? { ...i, checklist: i.checklist.map((c) => (c.id === checklistId ? { ...c, text } : c)) }
+        : i
+    )))
+    fetch(`/api/weekly-plan/checklist/${checklistId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    })
+  }
+
   function handleChecklistDelete(planItemId: string, checklistId: string) {
     setItems((prev) => prev.map((i) => (
       i.id === planItemId
@@ -319,6 +332,7 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
               syncing={syncing}
               onChecklistAdd={handleChecklistAdd}
               onChecklistToggle={handleChecklistToggle}
+              onChecklistEdit={handleChecklistEdit}
               onChecklistDelete={handleChecklistDelete}
             />
           )}

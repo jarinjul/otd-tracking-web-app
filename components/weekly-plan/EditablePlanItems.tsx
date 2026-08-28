@@ -49,6 +49,7 @@ interface EditablePlanItemsProps {
   syncing: boolean
   onChecklistAdd: (planItemId: string, text: string) => void
   onChecklistToggle: (planItemId: string, checklistId: string, done: boolean) => void
+  onChecklistEdit: (planItemId: string, checklistId: string, text: string) => void
   onChecklistDelete: (planItemId: string, checklistId: string) => void
 }
 
@@ -97,16 +98,97 @@ function StatusButtons({ status, onChange }: { status: PlanItemStatus; onChange:
   )
 }
 
+function ChecklistRow({
+  item,
+  onToggle,
+  onEdit,
+  onDelete,
+}: {
+  item: ChecklistItem
+  onToggle: (done: boolean) => void
+  onEdit: (text: string) => void
+  onDelete: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [text, setText] = useState(item.text)
+
+  function save() {
+    const trimmed = text.trim()
+    setEditing(false)
+    if (trimmed && trimmed !== item.text) onEdit(trimmed)
+    else setText(item.text)
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2">
+        <input
+          autoFocus
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") save()
+            if (e.key === "Escape") { setEditing(false); setText(item.text) }
+          }}
+          onBlur={save}
+          className="flex-1 text-xs px-1.5 py-0.5 rounded border outline-none focus:ring-2"
+          style={inputStyle}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="group flex items-center gap-2">
+      <input
+        type="checkbox"
+        checked={item.done}
+        onChange={(e) => onToggle(e.target.checked)}
+        className="shrink-0"
+        style={{ accentColor: "var(--color-accent)" }}
+      />
+      <span
+        className="flex-1 text-xs cursor-text"
+        onDoubleClick={() => setEditing(true)}
+        style={{
+          color: item.done ? "var(--color-text-muted)" : "var(--color-text-primary)",
+          textDecoration: item.done ? "line-through" : "none",
+        }}
+      >
+        {item.text}
+      </span>
+      <button
+        onClick={() => setEditing(true)}
+        className="opacity-0 group-hover:opacity-100 shrink-0 transition-opacity"
+        style={{ color: "var(--color-text-muted)" }}
+        title="แก้ไข to-do"
+      >
+        <Pencil size={11} />
+      </button>
+      <button
+        onClick={onDelete}
+        className="opacity-0 group-hover:opacity-100 shrink-0 transition-opacity"
+        style={{ color: "var(--color-rag-red)" }}
+        title="ลบ to-do"
+      >
+        <Trash2 size={12} />
+      </button>
+    </div>
+  )
+}
+
 function ChecklistSection({
   planItemId,
   checklist,
   onToggle,
+  onEdit,
   onDelete,
   onAdd,
 }: {
   planItemId: string
   checklist: ChecklistItem[]
   onToggle: (checklistId: string, done: boolean) => void
+  onEdit: (checklistId: string, text: string) => void
   onDelete: (checklistId: string) => void
   onAdd: (text: string) => void
 }) {
@@ -136,32 +218,13 @@ function ChecklistSection({
 
       <div className="flex flex-col gap-1">
         {checklist.map((c) => (
-          <div key={c.id} className="group flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={c.done}
-              onChange={(e) => onToggle(c.id, e.target.checked)}
-              className="shrink-0"
-              style={{ accentColor: "var(--color-accent)" }}
-            />
-            <span
-              className="flex-1 text-xs"
-              style={{
-                color: c.done ? "var(--color-text-muted)" : "var(--color-text-primary)",
-                textDecoration: c.done ? "line-through" : "none",
-              }}
-            >
-              {c.text}
-            </span>
-            <button
-              onClick={() => onDelete(c.id)}
-              className="opacity-0 group-hover:opacity-100 shrink-0 transition-opacity"
-              style={{ color: "var(--color-rag-red)" }}
-              title="ลบ to-do"
-            >
-              <Trash2 size={12} />
-            </button>
-          </div>
+          <ChecklistRow
+            key={c.id}
+            item={c}
+            onToggle={(done) => onToggle(c.id, done)}
+            onEdit={(text) => onEdit(c.id, text)}
+            onDelete={() => onDelete(c.id)}
+          />
         ))}
 
         <div className="flex items-center gap-2 mt-0.5">
@@ -187,6 +250,7 @@ function ItemRow({
   onDelete,
   onChecklistAdd,
   onChecklistToggle,
+  onChecklistEdit,
   onChecklistDelete,
 }: {
   item: PlanItem
@@ -194,6 +258,7 @@ function ItemRow({
   onDelete: (id: string) => void
   onChecklistAdd: EditablePlanItemsProps["onChecklistAdd"]
   onChecklistToggle: EditablePlanItemsProps["onChecklistToggle"]
+  onChecklistEdit: EditablePlanItemsProps["onChecklistEdit"]
   onChecklistDelete: EditablePlanItemsProps["onChecklistDelete"]
 }) {
   const [editing, setEditing] = useState(false)
@@ -255,6 +320,7 @@ function ItemRow({
             planItemId={item.id}
             checklist={item.checklist}
             onToggle={(checklistId, done) => onChecklistToggle(item.id, checklistId, done)}
+            onEdit={(checklistId, text) => onChecklistEdit(item.id, checklistId, text)}
             onDelete={(checklistId) => onChecklistDelete(item.id, checklistId)}
             onAdd={(text) => onChecklistAdd(item.id, text)}
           />
@@ -312,7 +378,7 @@ function AddItemForm({ onAdd, onCancel }: { onAdd: EditablePlanItemsProps["onAdd
   )
 }
 
-export function EditablePlanItems({ items, onUpdate, onDelete, onAdd, onSync, syncing, onChecklistAdd, onChecklistToggle, onChecklistDelete }: EditablePlanItemsProps) {
+export function EditablePlanItems({ items, onUpdate, onDelete, onAdd, onSync, syncing, onChecklistAdd, onChecklistToggle, onChecklistEdit, onChecklistDelete }: EditablePlanItemsProps) {
   const [addingOpen, setAddingOpen] = useState(false)
 
   return (
@@ -354,6 +420,7 @@ export function EditablePlanItems({ items, onUpdate, onDelete, onAdd, onSync, sy
               onDelete={onDelete}
               onChecklistAdd={onChecklistAdd}
               onChecklistToggle={onChecklistToggle}
+              onChecklistEdit={onChecklistEdit}
               onChecklistDelete={onChecklistDelete}
             />
           ))
