@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart2, GitBranch, FileText, Users, Download, Building2, ListChecks, Gauge, Network, Zap, CalendarRange, LogOut } from "lucide-react"
+import { BarChart2, GitBranch, FileText, Users, Download, Building2, ListChecks, Gauge, BookText, Zap, CalendarRange, LogOut } from "lucide-react"
 import { NexusIcon } from "@/components/ui/NexusIcon"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
 
@@ -16,7 +16,7 @@ const NAV_ITEMS = [
   { href: "/workspace",    label: "PRD Center",   icon: FileText   },
   { href: "/people",       label: "People",       icon: Users      },
   { href: "/vendors",      label: "Vendors",      icon: Building2  },
-  { href: "/landscape",    label: "Landscape",    icon: Network    },
+  { href: "/wiki",         label: "Wiki",         icon: BookText   },
 ]
 
 export function Navbar() {

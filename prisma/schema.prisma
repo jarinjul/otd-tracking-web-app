@@ -356,3 +356,30 @@ model MonthlySnapshot {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ─── Wiki — topic-organised store for imported, self-contained HTML documents ──
+// Each topic is a heading; each entry is one HTML file the team produced elsewhere
+// and imported here. `html` holds the full document text; it is rendered inside a
+// sandboxed iframe on the client, so it is never trusted as app-origin markup.
+model WikiTopic {
+  id        String      @id @default(cuid())
+  title     String
+  sortOrder Int         @default(0)
+  entries   WikiEntry[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model WikiEntry {
+  id         String    @id @default(cuid())
+  topic      WikiTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId    String
+  title      String
+  html       String // full imported HTML document, stored as text
+  sourceName String? // original filename, e.g. "zenith-hub.html"
+  sortOrder  Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([topicId])
+}
