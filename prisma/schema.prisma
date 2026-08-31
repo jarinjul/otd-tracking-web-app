@@ -114,6 +114,10 @@ model Project {
   designPrototypeUrl String?
   prdContent         String? @default("")
 
+  // Development AI-credit line items, entered in Admin/Projects. One project can
+  // have several: [{ modelsAi, costModel }] — costModel is a Baht amount.
+  aiCredits Json @default("[]")
+
   lastUpdated DateTime @updatedAt
 
   teamMembers ProjectMember[]
@@ -200,6 +204,12 @@ model Release {
   vendorName       String?
   vendorCost       Float? // Baht — quote if outsourced
   vendorTimeDays Float?
+
+  // ── Cost accounting (SAP) — free-text codes entered in Admin/Releases ──
+  workforce   String?
+  costCenter  String?
+  costElement String?
+  ioNumber    String?
 
   ideas           IdeaItem[]
   blockers        Blocker[]

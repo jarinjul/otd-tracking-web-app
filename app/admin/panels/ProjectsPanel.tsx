@@ -15,6 +15,10 @@ function arrToInput(arr: string[] | null | undefined): string {
 
 type ProjectRow = Project & { _count?: { teamMembers: number } }
 
+// Development AI-credit line item — one project can have several.
+type AiCreditEntry = { modelsAi: string; costModel: string }
+const EMPTY_AI_CREDIT: AiCreditEntry = { modelsAi: "", costModel: "" }
+
 const STRATEGIC_BUCKET_OPTIONS = [
   { value: "FOCUS",       label: "Focus (Customer-active)",     desc: "ซอฟต์แวร์ตัวเก่งสร้างมูลค่าหลัก" },
   { value: "NEW_PRODUCT", label: "New Product",                 desc: "ซอฟต์แวร์ตัวใหม่แกะกล่อง" },
@@ -43,6 +47,7 @@ const EMPTY_FORM = {
   prdContent: "",
   productOwnerName: "",
   productOwnerAvatar: "",
+  aiCredits: [] as AiCreditEntry[],
 }
 
 type FormState = typeof EMPTY_FORM
@@ -137,6 +142,12 @@ export function ProjectsPanel() {
       prdContent: p.prdContent ?? "",
       productOwnerName: (p as any).productOwnerName ?? "",
       productOwnerAvatar: (p as any).productOwnerAvatar ?? "",
+      aiCredits: Array.isArray((p as any).aiCredits)
+        ? ((p as any).aiCredits as any[]).map((e) => ({
+            modelsAi: e?.modelsAi ?? "",
+            costModel: e?.costModel != null ? String(e.costModel) : "",
+          }))
+        : [],
     })
     setAvatarError(null)
     setDrawerOpen(true)
@@ -144,6 +155,16 @@ export function ProjectsPanel() {
 
   function setField<K extends keyof FormState>(key: K, val: FormState[K]) {
     setForm((f) => ({ ...f, [key]: val }))
+  }
+
+  function updateAiCredit(i: number, patch: Partial<AiCreditEntry>) {
+    setForm((f) => ({ ...f, aiCredits: f.aiCredits.map((e, j) => (j === i ? { ...e, ...patch } : e)) }))
+  }
+  function addAiCredit() {
+    setForm((f) => ({ ...f, aiCredits: [...f.aiCredits, { ...EMPTY_AI_CREDIT }] }))
+  }
+  function removeAiCredit(i: number) {
+    setForm((f) => ({ ...f, aiCredits: f.aiCredits.filter((_, j) => j !== i) }))
   }
 
   function buildPayload() {
@@ -160,6 +181,12 @@ export function ProjectsPanel() {
       prdContent: form.prdContent,
       productOwnerName: form.productOwnerName || null,
       productOwnerAvatar: form.productOwnerAvatar || null,
+      aiCredits: form.aiCredits
+        .filter((e) => e.modelsAi.trim() || e.costModel !== "")
+        .map((e) => ({
+          modelsAi: e.modelsAi.trim(),
+          costModel: e.costModel !== "" ? Number(e.costModel) : null,
+        })),
     }
   }
 
@@ -570,6 +597,73 @@ export function ProjectsPanel() {
                   placeholder="Paste or write the full PRD content here…"
                 />
               </Field>
+
+              {/* ── Section: AI Credits (Develop) ── */}
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+                  AI Credits (Develop)
+                </p>
+                <button
+                  type="button"
+                  onClick={addAiCredit}
+                  className="text-xs px-3 py-1.5 rounded-lg border font-medium"
+                  style={{ borderColor: "var(--color-border)", color: "var(--color-accent)" }}
+                >
+                  + เพิ่มรายการ
+                </button>
+              </div>
+              <p className="text-xs -mt-3" style={{ color: "var(--color-text-muted)" }}>
+                credit ที่ใช้ในการ develop ต่อ Project — ใส่ได้หลายรายการ
+              </p>
+
+              {form.aiCredits.length === 0 ? (
+                <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>ยังไม่มีรายการ</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {form.aiCredits.map((entry, i) => (
+                    <div
+                      key={i}
+                      className="rounded-xl border p-3 relative"
+                      style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => removeAiCredit(i)}
+                        className="absolute top-2 right-2 w-5 h-5 rounded-full text-xs flex items-center justify-center border"
+                        style={{ borderColor: "var(--color-border)", color: "var(--color-rag-red)", background: "var(--color-card)" }}
+                        title="ลบรายการนี้"
+                      >
+                        ✕
+                      </button>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-medium mb-1 block" style={{ color: "var(--color-text-primary)" }}>Models AI</label>
+                          <input
+                            className={inputCls}
+                            style={inputStyle}
+                            value={entry.modelsAi}
+                            onChange={(e) => updateAiCredit(i, { modelsAi: e.target.value })}
+                            placeholder="e.g. Claude Sonnet"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium mb-1 block" style={{ color: "var(--color-text-primary)" }}>Cost Model (Baht)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            className={inputCls}
+                            style={inputStyle}
+                            value={entry.costModel}
+                            onChange={(e) => updateAiCredit(i, { costModel: e.target.value })}
+                            placeholder="e.g. 8400"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Save button */}
               <div className="pt-2 pb-2">

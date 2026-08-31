@@ -19,6 +19,7 @@ type ReleaseRow = {
   devEntries: DevEntryStored[]
   aiEntries: AiEntryStored[]
   vendorName: string | null; vendorCost: number | null; vendorTimeDays: number | null
+  workforce: string | null; costCenter: string | null; costElement: string | null; ioNumber: string | null
   createdAt: string
   project: { id: string; name: string }
 }
@@ -166,6 +167,7 @@ const EMPTY_FORM = {
   devEntries: [{ ...EMPTY_DEV_ENTRY }] as DevEntry[],
   aiEntries: [{ ...EMPTY_AI_ENTRY }] as AiEntry[],
   vendorName: "", vendorCost: "", vendorTimeDays: "",
+  workforce: "", costCenter: "", costElement: "", ioNumber: "",
 }
 type FormState = typeof EMPTY_FORM
 
@@ -370,6 +372,10 @@ export function ReleasesPanel() {
       vendorName: r.vendorName ?? "",
       vendorCost: r.vendorCost != null ? String(r.vendorCost) : "",
       vendorTimeDays: r.vendorTimeDays != null ? String(r.vendorTimeDays) : "",
+      workforce: r.workforce ?? "",
+      costCenter: r.costCenter ?? "",
+      costElement: r.costElement ?? "",
+      ioNumber: r.ioNumber ?? "",
     })
     setDrawerOpen(true)
     setIdeaDraft(EMPTY_IDEA_DRAFT); setBlockerDraft(EMPTY_BLOCKER_DRAFT); setNextStepDraft(EMPTY_NEXTSTEP_DRAFT); setRiskDraft(EMPTY_RISK_DRAFT)
@@ -433,6 +439,10 @@ export function ReleasesPanel() {
       vendorName: form.vendorName || null,
       vendorCost: form.vendorCost !== "" ? Number(form.vendorCost) : null,
       vendorTimeDays: form.vendorTimeDays !== "" ? Number(form.vendorTimeDays) : null,
+      workforce: form.workforce.trim() || null,
+      costCenter: form.costCenter.trim() || null,
+      costElement: form.costElement.trim() || null,
+      ioNumber: form.ioNumber.trim() || null,
     }
   }
 
@@ -1104,6 +1114,26 @@ export function ReleasesPanel() {
                   )}
                 </div>
               )}
+
+              {/* ── Section: Cost Accounting (SAP) ── */}
+              <p className="text-xs font-bold uppercase tracking-wider mt-2" style={{ color: "var(--color-text-muted)" }}>
+                Cost Accounting (SAP)
+              </p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Workforce (WF)">
+                  <input className={inputCls} style={inputStyle} value={form.workforce} onChange={(e) => setField("workforce", e.target.value)} placeholder="e.g. WF-102" />
+                </Field>
+                <Field label="Cost Center">
+                  <input className={inputCls} style={inputStyle} value={form.costCenter} onChange={(e) => setField("costCenter", e.target.value)} placeholder="e.g. 1000-2100" />
+                </Field>
+                <Field label="Cost Element">
+                  <input className={inputCls} style={inputStyle} value={form.costElement} onChange={(e) => setField("costElement", e.target.value)} placeholder="e.g. 5100300" />
+                </Field>
+                <Field label="IO Number">
+                  <input className={inputCls} style={inputStyle} value={form.ioNumber} onChange={(e) => setField("ioNumber", e.target.value)} placeholder="e.g. IO-250014" />
+                </Field>
+              </div>
 
               {/* ── Section: Ideas / Blockers / Next Steps — scoped to this release ── */}
               <p className="text-xs font-bold uppercase tracking-wider mt-2" style={{ color: "var(--color-text-muted)" }}>

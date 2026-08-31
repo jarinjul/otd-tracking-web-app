@@ -28,6 +28,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       vendorName: body.vendorName || null,
       vendorCost: body.vendorCost ?? null,
       vendorTimeDays: body.vendorTimeDays ?? null,
+      workforce: body.workforce || null,
+      costCenter: body.costCenter || null,
+      costElement: body.costElement || null,
+      ioNumber: body.ioNumber || null,
     },
     include: { project: { select: { id: true, name: true } } },
   })
