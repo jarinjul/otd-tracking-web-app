@@ -7,6 +7,7 @@ import { ProjectMembersPanel } from "./panels/ProjectMembersPanel"
 import { ReleasesPanel } from "./panels/ReleasesPanel"
 import { ReleasePolicyPanel } from "./panels/ReleasePolicyPanel"
 import { VendorOrdersPanel } from "./panels/VendorOrdersPanel"
+import { CostCoveragePanel } from "./panels/CostCoveragePanel"
 
 const ENTITIES = [
   { key: "projects", label: "Projects", ready: true },
@@ -15,6 +16,7 @@ const ENTITIES = [
   { key: "releases", label: "Releases", ready: true },
   { key: "releasePolicy", label: "Release Policy", ready: true },
   { key: "vendorOrders", label: "Vendor Orders", ready: true },
+  { key: "costCoverage", label: "Cost & AI Coverage", ready: true },
 ]
 
 export function AdminClient() {
@@ -79,6 +81,7 @@ export function AdminClient() {
         {active === "releases" && <ReleasesPanel />}
         {active === "releasePolicy" && <ReleasePolicyPanel />}
         {active === "vendorOrders" && <VendorOrdersPanel />}
+        {active === "costCoverage" && <CostCoveragePanel />}
       </main>
     </div>
   )
