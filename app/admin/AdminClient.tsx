@@ -21,6 +21,13 @@ const ENTITIES = [
 
 export function AdminClient() {
   const [active, setActive] = useState("projects")
+  // Deep-link target from the Cost & AI Coverage panel: switch tab + focus a project.
+  const [focusProjectId, setFocusProjectId] = useState<string | null>(null)
+
+  function goToProject(panel: "releases" | "projects", projectId: string) {
+    setFocusProjectId(projectId)
+    setActive(panel)
+  }
 
   return (
     <div className="min-h-screen flex" style={{ fontFamily: "var(--font-sans)", background: "var(--color-surface)" }}>
@@ -75,13 +82,23 @@ export function AdminClient() {
 
       {/* Content */}
       <main className="flex-1 overflow-auto">
-        {active === "projects" && <ProjectsPanel />}
+        {active === "projects" && (
+          <ProjectsPanel
+            focusProjectId={focusProjectId}
+            onFocusHandled={() => setFocusProjectId(null)}
+          />
+        )}
         {active === "people" && <PeoplePanel />}
         {active === "members" && <ProjectMembersPanel />}
-        {active === "releases" && <ReleasesPanel />}
+        {active === "releases" && (
+          <ReleasesPanel
+            focusProjectId={focusProjectId}
+            onFocusHandled={() => setFocusProjectId(null)}
+          />
+        )}
         {active === "releasePolicy" && <ReleasePolicyPanel />}
         {active === "vendorOrders" && <VendorOrdersPanel />}
-        {active === "costCoverage" && <CostCoveragePanel />}
+        {active === "costCoverage" && <CostCoveragePanel onEditProject={goToProject} />}
       </main>
     </div>
   )

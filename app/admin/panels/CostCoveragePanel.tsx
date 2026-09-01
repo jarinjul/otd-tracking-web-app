@@ -99,7 +99,11 @@ function Code({ value }: { value: string }) {
 
 // ─── Panel ─────────────────────────────────────────────────────────────────
 
-export function CostCoveragePanel() {
+export function CostCoveragePanel({
+  onEditProject,
+}: {
+  onEditProject?: (panel: "releases" | "projects", projectId: string) => void
+} = {}) {
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -402,8 +406,22 @@ export function CostCoveragePanel() {
                           <td colSpan={9} className="px-4 pb-5 pt-1 pl-10">
                             <div className="grid gap-5" style={{ gridTemplateColumns: "1.7fr 1fr" }}>
                               <div className="rounded-xl border p-3" style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}>
-                                <div className="text-[10.5px] font-bold uppercase tracking-wide mb-2" style={{ color: "var(--color-text-muted)" }}>
-                                  SAP codes ราย release
+                                <div className="flex items-center justify-between gap-2 mb-2">
+                                  <div className="text-[10.5px] font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
+                                    SAP codes ราย release
+                                  </div>
+                                  {onEditProject && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onEditProject("releases", r.id)
+                                      }}
+                                      className="text-[11px] px-2 py-1 rounded-md border font-medium whitespace-nowrap"
+                                      style={{ borderColor: "var(--color-border)", color: "var(--color-accent)" }}
+                                    >
+                                      แก้ที่ Releases →
+                                    </button>
+                                  )}
                                 </div>
                                 {r.releases.length === 0 ? (
                                   <div className="text-xs py-1" style={{ color: "var(--color-text-muted)" }}>
@@ -443,8 +461,22 @@ export function CostCoveragePanel() {
                               </div>
 
                               <div className="rounded-xl border p-3" style={{ borderColor: "var(--color-border)", background: "var(--color-card)" }}>
-                                <div className="text-[10.5px] font-bold uppercase tracking-wide mb-2" style={{ color: "var(--color-text-muted)" }}>
-                                  AI Credits (Develop)
+                                <div className="flex items-center justify-between gap-2 mb-2">
+                                  <div className="text-[10.5px] font-bold uppercase tracking-wide" style={{ color: "var(--color-text-muted)" }}>
+                                    AI Credits (Develop)
+                                  </div>
+                                  {onEditProject && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onEditProject("projects", r.id)
+                                      }}
+                                      className="text-[11px] px-2 py-1 rounded-md border font-medium whitespace-nowrap"
+                                      style={{ borderColor: "var(--color-border)", color: "var(--color-accent)" }}
+                                    >
+                                      แก้ที่ Projects →
+                                    </button>
+                                  )}
                                 </div>
                                 {r.aiCredits.length === 0 ? (
                                   <div className="text-xs py-1" style={{ color: "var(--color-text-muted)" }}>
@@ -528,8 +560,9 @@ export function CostCoveragePanel() {
       <p className="mt-4 text-xs pl-3 max-w-[72ch]" style={{ color: "var(--color-text-muted)", borderLeft: "2px solid var(--color-border)" }}>
         ตัวเลขในช่อง Workforce / Cost Center / Cost Element / IO Number คือ “จำนวน release ที่กรอกช่องนั้นแล้ว”
         เทียบกับจำนวน release ทั้งหมด (เช่น <b style={{ color: "var(--color-text-primary)" }}>3 / 4</b>). คลิกที่แถวเพื่อดู
-        SAP codes ราย release และรายการ AI ที่ซื้อ. แก้ข้อมูลได้ที่แท็บ <b style={{ color: "var(--color-text-primary)" }}>Releases</b> (Workforce /
-        Cost Center / Cost Element / IO Number) และ <b style={{ color: "var(--color-text-primary)" }}>Projects</b> (Models AI + Cost Model).
+        SAP codes ราย release และรายการ AI ที่ซื้อ พร้อมปุ่มลัดไปแก้ที่แท็บ
+        <b style={{ color: "var(--color-text-primary)" }}> Releases</b> (Workforce / Cost Center / Cost Element / IO Number)
+        และ <b style={{ color: "var(--color-text-primary)" }}>Projects</b> (Models AI + Cost Model) ของโปรเจกต์นั้นโดยตรง.
       </p>
     </div>
   )

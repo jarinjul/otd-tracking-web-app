@@ -195,7 +195,13 @@ function aiCostOf(e: AiEntry): number {
 
 type MemberOption = { projectId: string; personId: string; personName: string }
 
-export function ReleasesPanel() {
+export function ReleasesPanel({
+  focusProjectId,
+  onFocusHandled,
+}: {
+  focusProjectId?: string | null
+  onFocusHandled?: () => void
+} = {}) {
   const [releases, setReleases] = useState<ReleaseRow[]>([])
   const [projects, setProjects] = useState<ProjectOption[]>([])
   const [members, setMembers] = useState<MemberOption[]>([])
@@ -328,6 +334,15 @@ export function ReleasesPanel() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // Deep-link from the Cost & AI Coverage panel: filter to the project and open its group.
+  useEffect(() => {
+    if (!focusProjectId || loading) return
+    setFilterProjectId(focusProjectId)
+    setExpandedProjects(new Set([focusProjectId]))
+    onFocusHandled?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusProjectId, loading])
 
   function showFeedback(type: "success" | "error", msg: string) {
     setFeedback({ type, msg }); setTimeout(() => setFeedback(null), 4000)

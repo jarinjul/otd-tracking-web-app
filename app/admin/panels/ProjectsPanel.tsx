@@ -88,7 +88,13 @@ const inputStyle = {
 
 // ─── Main panel ──────────────────────────────────────────────────────────────
 
-export function ProjectsPanel() {
+export function ProjectsPanel({
+  focusProjectId,
+  onFocusHandled,
+}: {
+  focusProjectId?: string | null
+  onFocusHandled?: () => void
+} = {}) {
   const [projects, setProjects] = useState<ProjectRow[]>([])
   const [loading, setLoading] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -114,6 +120,16 @@ export function ProjectsPanel() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // Deep-link from the Cost & AI Coverage panel: open this project's edit drawer.
+  useEffect(() => {
+    if (!focusProjectId || loading) return
+    const p = projects.find((x) => x.id === focusProjectId)
+    if (!p) return
+    openEdit(p)
+    onFocusHandled?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusProjectId, loading, projects])
 
   function showFeedback(type: "success" | "error", msg: string) {
     setFeedback({ type, msg })
