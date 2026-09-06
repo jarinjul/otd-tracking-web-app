@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { Sparkles } from "lucide-react"
 import { weekStart as computeWeekStart, addDays, formatDate, toDateParam } from "@/lib/utils/date"
 import { WeekNav } from "@/components/weekly-plan/WeekNav"
 import { WeekSummaryCards } from "@/components/weekly-plan/WeekSummaryCards"
@@ -9,6 +10,7 @@ import { WeekRecap } from "@/components/weekly-plan/WeekRecap"
 import { MeetingNotes } from "@/components/weekly-plan/MeetingNotes"
 import { PersonFocusCard, type PersonFocus, type FocusTask } from "@/components/weekly-plan/PersonFocusCard"
 import { ProjectHealthTable, type ProjectHealthRow } from "@/components/weekly-plan/ProjectHealthTable"
+import { ReportEmailModal } from "@/components/weekly-plan/ReportEmailModal"
 
 type Priority = "high" | "medium" | "low"
 
@@ -91,6 +93,8 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
   const [weekPlanId, setWeekPlanId] = useState<string | null>(null)
   const [kickoffNotes, setKickoffNotes] = useState<string | null>(null)
   const [wrapupNotes, setWrapupNotes] = useState<string | null>(null)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportGenerating, setReportGenerating] = useState(false)
 
   const loadPlan = useCallback(async (weekDate: Date) => {
     setLoading(true)
@@ -304,14 +308,25 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
             แผนงานรายสัปดาห์ — แก้ไข เพิ่มรายการ และติดตามความคืบหน้าได้ ย้อนดูสัปดาห์ก่อนหน้าได้ทุกเมื่อ
           </p>
         </div>
-        <WeekNav
-          weekStart={selectedWeekStart}
-          weekEnd={selectedWeekEnd}
-          isCurrentWeek={isCurrentWeek}
-          onPrev={() => setSelectedWeekStart(addDays(selectedWeekStart, -7))}
-          onNext={() => setSelectedWeekStart(addDays(selectedWeekStart, 7))}
-          onToday={() => setSelectedWeekStart(currentWeekStart)}
-        />
+        <div className="flex items-center gap-3">
+          <WeekNav
+            weekStart={selectedWeekStart}
+            weekEnd={selectedWeekEnd}
+            isCurrentWeek={isCurrentWeek}
+            onPrev={() => setSelectedWeekStart(addDays(selectedWeekStart, -7))}
+            onNext={() => setSelectedWeekStart(addDays(selectedWeekStart, 7))}
+            onToday={() => setSelectedWeekStart(currentWeekStart)}
+          />
+          <button
+            onClick={() => setReportOpen(true)}
+            disabled={reportGenerating}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ background: "var(--color-accent)" }}
+          >
+            <Sparkles size={15} />
+            {reportGenerating ? "กำลังสร้าง…" : "Generate Report Email"}
+          </button>
+        </div>
       </div>
 
       <WeekSummaryCards total={items.length} done={done} pending={pending} carriedOver={carriedOver} />
@@ -392,6 +407,15 @@ export function WeeklyPlanClient({ projects, nextSteps, people, interrupts }: We
           ))}
         </div>
       </div>
+
+      <ReportEmailModal
+        open={reportOpen}
+        weekStart={selectedWeekStart}
+        weekEnd={selectedWeekEnd}
+        onClose={() => setReportOpen(false)}
+        initialEmpty={items.length === 0 && !kickoffNotes && !wrapupNotes}
+        onLoadingChange={setReportGenerating}
+      />
     </div>
   )
 }

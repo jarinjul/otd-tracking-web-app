@@ -6,7 +6,7 @@ import { PHASE_LABELS } from "@/lib/types"
 // (not the server's local time) — this runs on both a GMT+7 dev machine and Vercel's UTC servers,
 // and both must produce the exact same instant so the same logical week always maps to the same
 // WeekPlan row (weekStart is @unique).
-function normalizeWeekStart(param: string): Date {
+export function normalizeWeekStart(param: string): Date {
   const [y, m, d] = param.split("-").map(Number)
   const date = new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1))
   const day = date.getUTCDay()
