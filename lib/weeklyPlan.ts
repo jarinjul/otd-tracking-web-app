@@ -129,7 +129,29 @@ async function generateAutoItems(weekStartDate: Date): Promise<AutoItem[]> {
     })
   }
 
-  return list.sort((a, b) => b.score - a.score).slice(0, 15)
+  return list.sort((a, b) => b.score - a.score)
+}
+
+// Auto items are snapshots taken when the plan is created, so they go stale once the release
+// is no longer red/delayed/etc. Drop untouched pending auto items whose source condition is gone.
+// Past weeks are left alone as history.
+async function pruneStaleAutoItems(plan: { id: string; weekStart: Date; items: Array<{ id: string; source: string; status: string; sourceRefId: string | null; note: string | null; carriedFromId: string | null; checklist: unknown[] }> }) {
+  if (plan.weekStart < normalizeWeekStart(new Date().toISOString().slice(0, 10))) return false
+
+  const current = new Set((await generateAutoItems(plan.weekStart)).map((a) => a.sourceRefId))
+  const stale = plan.items.filter(
+    (i) =>
+      i.source === "auto" &&
+      i.status === "pending" &&
+      !i.carriedFromId &&
+      !i.note &&
+      i.checklist.length === 0 &&
+      i.sourceRefId &&
+      !current.has(i.sourceRefId)
+  )
+  if (stale.length === 0) return false
+  await prisma.weekPlanItem.deleteMany({ where: { id: { in: stale.map((i) => i.id) } } })
+  return true
 }
 
 export async function getOrCreateWeekPlan(weekParam: string) {
@@ -140,7 +162,15 @@ export async function getOrCreateWeekPlan(weekParam: string) {
     include: { items: { orderBy: { sortOrder: "asc" }, include: { checklist: { orderBy: { sortOrder: "asc" } } } } },
   })
 
-  if (plan) return plan
+  if (plan) {
+    if (await pruneStaleAutoItems(plan)) {
+      return prisma.weekPlan.findUniqueOrThrow({
+        where: { id: plan.id },
+        include: { items: { orderBy: { sortOrder: "asc" }, include: { checklist: { orderBy: { sortOrder: "asc" } } } } },
+      })
+    }
+    return plan
+  }
 
   plan = await prisma.weekPlan.create({
     data: { weekStart: normalized },
