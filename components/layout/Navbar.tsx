@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { BarChart2, GitBranch, FileText, Users, Download, Building2, ListChecks, Gauge, BookText, Zap, CalendarRange, LogOut } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { BarChart2, GitBranch, FileText, Users, Download, Building2, ListChecks, Gauge, BookText, Zap, CalendarRange } from "lucide-react"
 import { NexusIcon } from "@/components/ui/NexusIcon"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
 
@@ -21,14 +21,6 @@ const NAV_ITEMS = [
 
 export function Navbar() {
   const pathname = usePathname()
-  const router = useRouter()
-  if (pathname === "/login") return null
-
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" })
-    router.push("/login")
-    router.refresh()
-  }
 
   return (
     <header className="bg-primary text-white shrink-0">
@@ -84,17 +76,6 @@ export function Navbar() {
         >
           Admin
         </Link>
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors shrink-0 hover:text-white"
-          style={{ color: "rgba(255,255,255,0.5)" }}
-          title="Logout"
-        >
-          <LogOut size={13} />
-          Logout
-        </button>
       </div>
     </header>
   )
